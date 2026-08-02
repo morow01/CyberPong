@@ -13,11 +13,11 @@ const POWERUP_TYPES = {
 };
 
 class Ball {
-    constructor(x, y, vx = 350, vy = 150) {
+    constructor(x, y, vx = 300, vy = 120) {
         this.x = x;
         this.y = y;
         this.radius = 8;
-        this.baseSpeed = 400;
+        this.baseSpeed = 300; // Gentler initial serve
         this.speed = this.baseSpeed;
         this.vx = vx;
         this.vy = vy;
@@ -50,7 +50,7 @@ class Ball {
         if (!this.heldBy) return;
         const dir = this.heldBy.id === 'p1' ? 1 : -1;
         this.vx = dir * this.speed * 1.2;
-        this.vy = (Math.random() - 0.5) * 200;
+        this.vy = (Math.random() - 0.5) * 180;
         this.heldBy = null;
     }
 
@@ -77,15 +77,13 @@ class Paddle {
         this.x = x;
         this.y = y;
         this.width = 14;
-        this.baseHeight = 90;
+        this.baseHeight = 115; // Wider for easier family play!
         this.height = this.baseHeight;
         this.score = 0;
         this.color = id === 'p1' ? '#00f3ff' : '#ff0055';
 
-        // Ultimate Meter (0 - 100)
         this.ultEnergy = 0;
 
-        // Upgrades & Timers
         this.hasShield = false;
         this.hasMagnet = false;
         this.isFrozen = false;
@@ -270,8 +268,8 @@ class GameEngine {
         this.targetScore = 7;
         this.state = 'MENU';
 
-        this.p1 = new Paddle('p1', 30, this.height / 2 - 45);
-        this.p2 = new Paddle('p2', this.width - 44, this.height / 2 - 45);
+        this.p1 = new Paddle('p1', 30, this.height / 2 - 57);
+        this.p2 = new Paddle('p2', this.width - 44, this.height / 2 - 57);
         this.balls = [];
         this.powerUps = [];
         this.lasers = [];
@@ -306,8 +304,8 @@ class GameEngine {
 
         this.ai.setDifficulty(this.aiDiff);
 
-        this.p1 = new Paddle('p1', 30, this.height / 2 - 45);
-        this.p2 = new Paddle('p2', this.width - 44, this.height / 2 - 45);
+        this.p1 = new Paddle('p1', 30, this.height / 2 - 57);
+        this.p2 = new Paddle('p2', this.width - 44, this.height / 2 - 57);
 
         this.balls = [];
         this.powerUps = [];
@@ -315,7 +313,6 @@ class GameEngine {
         this.powerUpSpawnTimer = 4;
         this.bulletTimeTimer = 0;
 
-        // Init Pinball Bumpers
         this.bumpers = [
             new PinballBumper(this.width / 2, this.height * 0.3),
             new PinballBumper(this.width / 2, this.height * 0.7)
@@ -328,8 +325,8 @@ class GameEngine {
     }
 
     spawnBall(dir = 1) {
-        const speed = 360;
-        const angle = (Math.random() - 0.5) * (Math.PI / 3);
+        const speed = 300;
+        const angle = (Math.random() - 0.5) * (Math.PI / 4);
         const vx = Math.cos(angle) * speed * dir;
         const vy = Math.sin(angle) * speed;
         this.balls.push(new Ball(this.width / 2, this.height / 2, vx, vy));
@@ -341,6 +338,7 @@ class GameEngine {
 
         this.sound.playUltimate();
         this.particles.triggerShake(18, 0.4);
+        this.particles.addFloatingText(this.width / 2, this.height / 2 - 40, "ULTIMATE ACTIVATED!", "#00f3ff");
 
         const opponent = paddle.id === 'p1' ? this.p2 : this.p1;
         opponent.stunTimer = 1.5;
@@ -361,7 +359,7 @@ class GameEngine {
 
         if (this.balls.length > 0) {
             const ballSpeed = Math.hypot(this.balls[0].vx, this.balls[0].vy);
-            this.sound.setBgmSpeed(ballSpeed / 400);
+            this.sound.setBgmSpeed(ballSpeed / 300);
         }
 
         this.p1.update(dt);
@@ -375,7 +373,6 @@ class GameEngine {
         this.checkLaserLaunch(this.p1);
         this.checkLaserLaunch(this.p2);
 
-        // Update Lasers
         for (let i = this.lasers.length - 1; i >= 0; i--) {
             const laser = this.lasers[i];
             laser.update(effectiveDt);
@@ -399,14 +396,12 @@ class GameEngine {
             }
         }
 
-        // Power-Up Spawner
         this.powerUpSpawnTimer -= effectiveDt;
         if (this.powerUpSpawnTimer <= 0 && this.powerUps.length < 2) {
             this.spawnPowerUp();
             this.powerUpSpawnTimer = 8 + Math.random() * 6;
         }
 
-        // Update Power-Ups
         for (let i = this.powerUps.length - 1; i >= 0; i--) {
             const orb = this.powerUps[i];
             orb.update(effectiveDt);
@@ -438,12 +433,10 @@ class GameEngine {
             }
         }
 
-        // Update Balls
         for (let i = this.balls.length - 1; i >= 0; i--) {
             const ball = this.balls[i];
             ball.update(effectiveDt, this.particles);
 
-            // Wall Bounce
             if (ball.y - ball.radius <= 0) {
                 ball.y = ball.radius;
                 ball.vy *= -1;
@@ -456,21 +449,20 @@ class GameEngine {
                 this.particles.addSparks(ball.x, ball.y, '#00f3ff', 6);
             }
 
-            // Pinball Bumpers
             for (const bumper of this.bumpers) {
                 const d = Math.hypot(ball.x - bumper.x, ball.y - bumper.y);
                 if (d < ball.radius + bumper.radius) {
                     const angle = Math.atan2(ball.y - bumper.y, ball.x - bumper.x);
-                    const speed = Math.hypot(ball.vx, ball.vy) * 1.3;
+                    const speed = Math.hypot(ball.vx, ball.vy) * 1.25;
                     ball.vx = Math.cos(angle) * speed;
                     ball.vy = Math.sin(angle) * speed;
                     bumper.pulse = 1.0;
                     this.sound.playBumper();
                     this.particles.addSparks(bumper.x, bumper.y, '#ff0055', 18);
+                    this.particles.addFloatingText(bumper.x, bumper.y, "BUMPER BOOST!", "#ff0055");
                 }
             }
 
-            // Shield Barriers
             if (this.p1.hasShield && ball.x <= 15) {
                 ball.vx = Math.abs(ball.vx);
                 this.p1.hasShield = false;
@@ -484,7 +476,6 @@ class GameEngine {
                 this.particles.addSparks(this.width - 15, ball.y, '#00ff66', 25);
             }
 
-            // Paddle 1 Bounce
             if (
                 ball.vx < 0 &&
                 ball.x - ball.radius <= this.p1.x + this.p1.width &&
@@ -495,7 +486,6 @@ class GameEngine {
                 this.handlePaddleBounce(ball, this.p1);
             }
 
-            // Paddle 2 Bounce
             if (
                 ball.vx > 0 &&
                 ball.x + ball.radius >= this.p2.x &&
@@ -506,7 +496,6 @@ class GameEngine {
                 this.handlePaddleBounce(ball, this.p2);
             }
 
-            // Goal Scoring
             if (ball.x < 0) {
                 this.handleGoal('p2', i);
             } else if (ball.x > this.width) {
@@ -541,6 +530,12 @@ class GameEngine {
         this.stats.currentRally++;
         this.stats.maxRally = Math.max(this.stats.maxRally, this.stats.currentRally);
 
+        if (this.stats.currentRally === 5) {
+            this.particles.addFloatingText(this.width / 2, 80, "5 RALLY COMBO!", "#ffaa00");
+        } else if (this.stats.currentRally === 10) {
+            this.particles.addFloatingText(this.width / 2, 80, "10 MEGA RALLY!", "#00ff66");
+        }
+
         if (paddle.hasMagnet) {
             ball.heldBy = paddle;
             ball.holdTimer = 1.5;
@@ -550,17 +545,17 @@ class GameEngine {
 
         const relativeIntersectY = (paddle.y + paddle.height / 2) - ball.y;
         const normalizedIntersectY = relativeIntersectY / (paddle.height / 2);
-        const bounceAngle = normalizedIntersectY * (Math.PI / 3);
+        const bounceAngle = normalizedIntersectY * (Math.PI / 3.5); // Slightly gentler angle
 
         const currentSpeed = Math.hypot(ball.vx, ball.vy);
-        const newSpeed = Math.min(850, currentSpeed * 1.04);
+        const newSpeed = Math.min(750, currentSpeed * 1.03);
 
         const dir = paddle.id === 'p1' ? 1 : -1;
         ball.vx = dir * newSpeed * Math.cos(bounceAngle);
         ball.vy = newSpeed * -Math.sin(bounceAngle);
 
         ball.color = paddle.color;
-        this.sound.playBounce(true, 1 + newSpeed / 850);
+        this.sound.playBounce(true, 1 + newSpeed / 750);
         this.particles.addSparks(paddle.id === 'p1' ? paddle.x + paddle.width : paddle.x, ball.y, paddle.color, 12);
     }
 
@@ -621,6 +616,7 @@ class GameEngine {
 
         const goalX = scorerId === 'p1' ? this.width - 10 : 10;
         this.particles.addGoalExplosion(goalX, this.height / 2, scorer.color);
+        this.particles.addFloatingText(this.width / 2, this.height / 2, `${scorerId === 'p1' ? 'P1' : 'P2'} SCORED!`, scorer.color);
         this.sound.playScore(scorerId === 'p1');
 
         this.balls.splice(ballIndex, 1);
@@ -647,6 +643,11 @@ class GameEngine {
 
         this.particles.drawBackgroundGrid(this.ctx, this.width, this.height);
 
+        // Draw Trajectory Guide Line for Player 1
+        if (this.balls.length > 0 && this.balls[0].vx < 0) {
+            this.drawTrajectoryGuide(this.ctx, this.balls[0], this.p1);
+        }
+
         this.bumpers.forEach(b => b.draw(this.ctx));
 
         if (this.p1.hasShield) this.drawShieldWall(12, '#00ff66');
@@ -662,6 +663,34 @@ class GameEngine {
 
         this.particles.drawParticles(this.ctx);
         this.ctx.restore();
+    }
+
+    drawTrajectoryGuide(ctx, ball, paddle) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+
+        let tx = ball.x;
+        let ty = ball.y;
+        let tvx = ball.vx;
+        let tvy = ball.vy;
+
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+
+        for (let i = 0; i < 40; i++) {
+            tx += tvx * 0.02;
+            ty += tvy * 0.02;
+
+            if (ty <= 0 || ty >= this.height) tvy *= -1;
+            if (tx <= paddle.x + paddle.width) break;
+
+            ctx.lineTo(tx, ty);
+        }
+
+        ctx.stroke();
+        ctx.restore();
     }
 
     drawShieldWall(x, color) {

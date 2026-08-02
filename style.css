@@ -80,7 +80,7 @@ body {
 }
 
 /* ==========================================
-   HUD Header & Version Badge
+   HUD Header & Gamepad Badges
    ========================================== */
 #gameHud {
     display: flex;
@@ -143,6 +143,25 @@ body {
     background: rgba(255, 0, 85, 0.15);
     color: var(--neon-magenta);
     border-color: var(--neon-magenta);
+}
+
+.gamepad-badge {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.gamepad-badge.connected {
+    background: rgba(0, 255, 102, 0.15);
+    border-color: #00ff66;
+    color: #00ff66;
+    box-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
 }
 
 .player-name {
@@ -374,7 +393,7 @@ input[type="range"] {
 }
 
 /* ==========================================
-   Modals & Overlay System
+   Modals & Gamepad Footer
    ========================================== */
 .modal-overlay {
     position: absolute;
@@ -436,7 +455,6 @@ input[type="range"] {
     margin-bottom: 0.5rem;
 }
 
-/* Mode Grid 3-Columns */
 .mode-grid-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -465,12 +483,6 @@ input[type="range"] {
     background: rgba(0, 243, 255, 0.15);
     border-color: var(--neon-cyan);
     box-shadow: 0 0 16px rgba(0, 243, 255, 0.3);
-}
-
-.mode-card.special-mode.active {
-    background: rgba(255, 0, 85, 0.18);
-    border-color: var(--neon-magenta);
-    box-shadow: 0 0 16px rgba(255, 0, 85, 0.4);
 }
 
 .mode-icon { font-size: 1.6rem; margin-bottom: 0.3rem; }
@@ -539,6 +551,18 @@ kbd {
     font-weight: 600;
     font-size: 0.7rem;
 }
+
+.gamepad-footer {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+}
+
+.status-on { color: #00ff66; font-weight: 700; }
+.status-off { color: var(--text-muted); }
 
 /* Action Buttons */
 .modal-footer, .modal-actions { display: flex; gap: 0.75rem; justify-content: center; }

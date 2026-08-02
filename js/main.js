@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v2.0 Application Entrypoint & UI Controller
+   CyberPong v2.0 Application Entrypoint & Dual Gamepad Controller
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const p1UltFill = document.getElementById('p1UltFill');
     const p2UltFill = document.getElementById('p2UltFill');
     const matchInfoEl = document.getElementById('matchInfo');
+
+    // Gamepad Badges
+    const p1GamepadBadge = document.getElementById('p1GamepadBadge');
+    const p2GamepadBadge = document.getElementById('p2GamepadBadge');
+    const gp1Status = document.getElementById('gp1Status');
+    const gp2Status = document.getElementById('gp2Status');
 
     // Boss Bar Elements
     const bossBarWrapper = document.getElementById('bossBarWrapper');
@@ -210,39 +216,106 @@ document.addEventListener('DOMContentLoaded', () => {
         keys[e.code] = false;
     });
 
-    // Input Processing
+    // Gamepad Connection Event Listeners
+    window.addEventListener('gamepadconnected', (e) => {
+        window.sound.init();
+        updateGamepadStatusBadges();
+    });
+
+    window.addEventListener('gamepaddisconnected', (e) => {
+        updateGamepadStatusBadges();
+    });
+
+    function updateGamepadStatusBadges() {
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        const gp1 = gamepads[0];
+        const gp2 = gamepads[1];
+
+        if (gp1) {
+            p1GamepadBadge.classList.add('connected');
+            gp1Status.innerHTML = `🎮 Controller 1: <span class="status-on">${gp1.id.substring(0, 20)}</span>`;
+        } else {
+            p1GamepadBadge.classList.remove('connected');
+            gp1Status.innerHTML = `🎮 Controller 1: <span class="status-off">Disconnected</span>`;
+        }
+
+        if (gp2) {
+            p2GamepadBadge.classList.add('connected');
+            gp2Status.innerHTML = `🎮 Controller 2: <span class="status-on">${gp2.id.substring(0, 20)}</span>`;
+        } else {
+            p2GamepadBadge.classList.remove('connected');
+            gp2Status.innerHTML = `🎮 Controller 2: <span class="status-off">Disconnected</span>`;
+        }
+    }
+
+    // Process Input (Keyboard & Dual Gamepad Poller)
     function processInput(dt) {
         if (game.state !== 'PLAYING') return;
 
-        const moveSpeed = 480;
+        const moveSpeed = 500;
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
 
-        // P1 Controls (W/S for move, Space/D for laser, Q for Ultimate)
+        // --- PLAYER 1 (Keyboard & Gamepad 0) --- //
         if (!game.p1.isFrozen && game.p1.stunTimer <= 0) {
-            if (keys['KeyW']) game.p1.y -= moveSpeed * dt;
-            if (keys['KeyS']) game.p1.y += moveSpeed * dt;
-        } else if (game.p1.isFrozen && game.p1.stunTimer <= 0) {
-            if (keys['KeyW']) game.p1.y -= moveSpeed * 0.5 * dt;
-            if (keys['KeyS']) game.p1.y += moveSpeed * 0.5 * dt;
+            let p1Move = 0;
+            if (keys['KeyW']) p1Move -= 1;
+            if (keys['KeyS']) p1Move += 1;
+
+            // Gamepad 0 Input for P1
+            if (gamepads[0]) {
+                const gp = gamepads[0];
+                const axisY = gp.axes[1]; // Left Stick Y-axis
+                if (Math.abs(axisY) > 0.15) p1Move += axisY;
+                if (gp.buttons[12] && gp.buttons[12].pressed) p1Move -= 1; // D-Pad Up
+                if (gp.buttons[13] && gp.buttons[13].pressed) p1Move += 1; // D-Pad Down
+
+                // Laser Shot (Button A / Cross - button 0, or Right Trigger - button 7)
+                if ((gp.buttons[0] && gp.buttons[0].pressed) || (gp.buttons[7] && gp.buttons[7].pressed)) {
+                    game.p1.shootLaser = true;
+                }
+                // Ultimate (Button Y / Triangle - button 3, or Left Trigger - button 6)
+                if ((gp.buttons[3] && gp.buttons[3].pressed) || (gp.buttons[2] && gp.buttons[2].pressed) || (gp.buttons[6] && gp.buttons[6].pressed)) {
+                    game.triggerUltimate(game.p1);
+                }
+            }
+
+            const speedMult = game.p1.isFrozen ? 0.5 : 1.0;
+            game.p1.y += p1Move * moveSpeed * speedMult * dt;
         }
 
         if (keys['Space'] || keys['KeyD']) game.p1.shootLaser = true;
         if (keys['KeyQ'] || keys['KeyE']) game.triggerUltimate(game.p1);
-
         game.p1.y = Math.max(10, Math.min(game.height - game.p1.height - 10, game.p1.y));
 
-        // P2 Controls in 2P Mode (Arrow Up/Down, Enter for laser, Shift for Ultimate)
+        // --- PLAYER 2 (Keyboard & Gamepad 1) --- //
         if (game.mode === '2p') {
             if (!game.p2.isFrozen && game.p2.stunTimer <= 0) {
-                if (keys['ArrowUp']) game.p2.y -= moveSpeed * dt;
-                if (keys['ArrowDown']) game.p2.y += moveSpeed * dt;
-            } else if (game.p2.isFrozen && game.p2.stunTimer <= 0) {
-                if (keys['ArrowUp']) game.p2.y -= moveSpeed * 0.5 * dt;
-                if (keys['ArrowDown']) game.p2.y += moveSpeed * 0.5 * dt;
+                let p2Move = 0;
+                if (keys['ArrowUp']) p2Move -= 1;
+                if (keys['ArrowDown']) p2Move += 1;
+
+                // Gamepad 1 Input for P2
+                if (gamepads[1]) {
+                    const gp = gamepads[1];
+                    const axisY = gp.axes[1];
+                    if (Math.abs(axisY) > 0.15) p2Move += axisY;
+                    if (gp.buttons[12] && gp.buttons[12].pressed) p2Move -= 1;
+                    if (gp.buttons[13] && gp.buttons[13].pressed) p2Move += 1;
+
+                    if ((gp.buttons[0] && gp.buttons[0].pressed) || (gp.buttons[7] && gp.buttons[7].pressed)) {
+                        game.p2.shootLaser = true;
+                    }
+                    if ((gp.buttons[3] && gp.buttons[3].pressed) || (gp.buttons[2] && gp.buttons[2].pressed) || (gp.buttons[6] && gp.buttons[6].pressed)) {
+                        game.triggerUltimate(game.p2);
+                    }
+                }
+
+                const speedMult = game.p2.isFrozen ? 0.5 : 1.0;
+                game.p2.y += p2Move * moveSpeed * speedMult * dt;
             }
 
             if (keys['Enter'] || keys['ArrowLeft']) game.p2.shootLaser = true;
             if (keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyM']) game.triggerUltimate(game.p2);
-
             game.p2.y = Math.max(10, Math.min(game.height - game.p2.height - 10, game.p2.y));
         }
     }
@@ -252,13 +325,11 @@ document.addEventListener('DOMContentLoaded', () => {
         p1ScoreEl.textContent = game.p1.score;
         p2ScoreEl.textContent = game.p2.score;
 
-        // Ultimate Meters
         p1UltFill.style.width = `${game.p1.ultEnergy}%`;
         p2UltFill.style.width = `${game.p2.ultEnergy}%`;
         if (game.p1.ultEnergy >= 100) p1UltFill.classList.add('ready'); else p1UltFill.classList.remove('ready');
         if (game.p2.ultEnergy >= 100) p2UltFill.classList.add('ready'); else p2UltFill.classList.remove('ready');
 
-        // Boss Health Bar
         if (game.mode === 'boss') {
             const healthPct = Math.max(0, (game.bossHealth / game.maxBossHealth) * 100);
             bossHealthFill.style.width = `${healthPct}%`;
@@ -266,8 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderPowerupBadges(game.p1, p1PowerupsEl);
         renderPowerupBadges(game.p2, p2PowerupsEl);
+        updateGamepadStatusBadges();
 
-        // Check Game Over
         if (game.state === 'GAMEOVER' && !gameOverModal.classList.contains('active')) {
             const winner = game.p1.score >= game.targetScore || (game.mode === 'boss' && game.bossHealth <= 0) ? 'PLAYER 1' : (game.mode === 'boss' ? 'CYBER BOSS' : (game.mode === '1p' ? 'CYBER AI' : 'PLAYER 2'));
             const winnerText = document.getElementById('winnerText');

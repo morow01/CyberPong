@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberPong v2.0: Neon Evolution</title>
-    <meta name="description" content="A modern cyberpunk action Pong game featuring 1P vs AI, 2P local multiplayer, Boss Fights, Portals, Pinball Bumpers, Ultimate Abilities, and Synthwave BGM.">
+    <meta name="description" content="A modern cyberpunk action Pong game featuring 1P vs AI, 2P local multiplayer, Dual Gamepad Controller support, Boss Fights, Ultimate Abilities, and Synthwave BGM.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,11 +20,12 @@
                 <div class="player-profile">
                     <span class="player-tag">P1</span>
                     <span class="player-name" id="p1Name">PLAYER 1</span>
+                    <span class="gamepad-badge" id="p1GamepadBadge" title="Controller 1 Status">🎮 P1</span>
                 </div>
                 <div class="score-display" id="p1Score">0</div>
                 <div class="hud-meters">
-                    <div class="ultimate-wrapper" title="Ultimate Ability (Key: Q)">
-                        <div class="ult-label">ULT [Q]</div>
+                    <div class="ultimate-wrapper" title="Ultimate Ability (Key: Q / Gamepad Y)">
+                        <div class="ult-label">ULT [Q/Y]</div>
                         <div class="ult-bar"><div class="ult-fill" id="p1UltFill"></div></div>
                     </div>
                     <div class="powerup-indicators" id="p1Powerups"></div>
@@ -39,7 +40,7 @@
                 </div>
                 <div class="match-info" id="matchInfo">FIRST TO 7 WINS</div>
                 
-                <!-- Boss Health Bar (Only active during Boss Fights) -->
+                <!-- Boss Health Bar -->
                 <div id="bossBarWrapper" class="boss-bar-wrapper" style="display: none;">
                     <div class="boss-label" id="bossName">MOTHERSHIP CORE</div>
                     <div class="boss-health-track">
@@ -57,14 +58,15 @@
             <!-- Player 2 / Boss Status -->
             <div class="player-hud p2-hud">
                 <div class="hud-meters">
-                    <div class="ultimate-wrapper" title="Ultimate Ability (Key: SHIFT)">
-                        <div class="ult-label">ULT [SHIFT]</div>
+                    <div class="ultimate-wrapper" title="Ultimate Ability (Key: SHIFT / Gamepad Y)">
+                        <div class="ult-label">ULT [SHIFT/Y]</div>
                         <div class="ult-bar"><div class="ult-fill" id="p2UltFill"></div></div>
                     </div>
                     <div class="powerup-indicators" id="p2Powerups"></div>
                 </div>
                 <div class="score-display" id="p2Score">0</div>
                 <div class="player-profile">
+                    <span class="gamepad-badge" id="p2GamepadBadge" title="Controller 2 Status">🎮 P2</span>
                     <span class="player-name" id="p2Name">CYBER AI</span>
                     <span class="player-tag p2-tag">P2</span>
                 </div>
@@ -95,7 +97,7 @@
                             <h2>CYBER<span class="highlight">PONG</span> EVOLUTION</h2>
                             <span class="version-badge">v2.0.0</span>
                         </div>
-                        <p class="subtitle">Select your game mode & upgrade options</p>
+                        <p class="subtitle">Supports Keyboard, Mouse & Dual Gamepads 🎮</p>
                     </div>
 
                     <div class="modal-body">
@@ -110,7 +112,7 @@
                             <button id="btnMode2P" class="mode-card">
                                 <div class="mode-icon">⚔️</div>
                                 <div class="mode-title">2 PLAYERS</div>
-                                <div class="mode-desc">Local 1v1</div>
+                                <div class="mode-desc">Local 1v1 Co-op</div>
                             </button>
                             <button id="btnModeBoss" class="mode-card special-mode">
                                 <div class="mode-icon">👾</div>
@@ -150,20 +152,26 @@
                             </div>
                         </div>
 
-                        <!-- Controls Diagram -->
+                        <!-- Gamepad & Control Guide -->
                         <div class="controls-guide">
                             <div class="control-box">
-                                <span class="box-title">PLAYER 1</span>
-                                <div class="key-combo"><kbd>W</kbd> / <kbd>S</kbd> : Move</div>
-                                <div class="key-combo"><kbd>SPACE</kbd> : Laser</div>
-                                <div class="key-combo"><kbd>Q</kbd> : ULTIMATE SKILL</div>
+                                <span class="box-title">PLAYER 1 (Keyboard/Controller 1)</span>
+                                <div class="key-combo"><kbd>W</kbd>/<kbd>S</kbd> or <kbd>Left Stick</kbd> : Move</div>
+                                <div class="key-combo"><kbd>SPACE</kbd> or <kbd>Button A</kbd> : Laser</div>
+                                <div class="key-combo"><kbd>Q</kbd> or <kbd>Button Y</kbd> : ULTIMATE</div>
                             </div>
                             <div class="control-box">
-                                <span class="box-title">PLAYER 2</span>
-                                <div class="key-combo"><kbd>↑</kbd> / <kbd>↓</kbd> : Move</div>
-                                <div class="key-combo"><kbd>ENTER</kbd> : Laser</div>
-                                <div class="key-combo"><kbd>SHIFT</kbd> : ULTIMATE SKILL</div>
+                                <span class="box-title">PLAYER 2 (Keyboard/Controller 2)</span>
+                                <div class="key-combo"><kbd>↑</kbd>/<kbd>↓</kbd> or <kbd>Left Stick</kbd> : Move</div>
+                                <div class="key-combo"><kbd>ENTER</kbd> or <kbd>Button A</kbd> : Laser</div>
+                                <div class="key-combo"><kbd>SHIFT</kbd> or <kbd>Button Y</kbd> : ULTIMATE</div>
                             </div>
+                        </div>
+
+                        <!-- Gamepad Status Footer Bar -->
+                        <div id="gamepadStatusFooter" class="gamepad-footer">
+                            <div class="gamepad-status-item" id="gp1Status">🎮 Controller 1: <span class="status-off">Disconnected</span></div>
+                            <div class="gamepad-status-item" id="gp2Status">🎮 Controller 2: <span class="status-off">Disconnected</span></div>
                         </div>
                     </div>
 
@@ -177,7 +185,7 @@
             <div id="pauseModal" class="modal-overlay">
                 <div class="modal-card glass-panel sm">
                     <h2>MATCH PAUSED</h2>
-                    <p>Press <kbd>P</kbd> or <kbd>ESC</kbd> to resume</p>
+                    <p>Press <kbd>P</kbd>, <kbd>ESC</kbd> or <kbd>START</kbd> on gamepad</p>
                     <div class="modal-actions">
                         <button id="btnResume" class="btn-primary">RESUME</button>
                         <button id="btnQuit" class="btn-secondary">QUIT TO MENU</button>
