@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Manic Miner: Cyber Edition - Platformer Physics & Logic Engine
+   Manic Miner: Cyber Edition - Platformer Physics & Logic Engine (v3.0.2)
    ========================================================================== */
 
 class MinerWilly {
@@ -10,10 +10,11 @@ class MinerWilly {
         this.height = 34;
         this.vx = 0;
         this.vy = 0;
-        this.speed = 260;
-        this.jumpForce = -490;
-        this.gravity = 1300;
+        this.speed = 280;
+        this.jumpForce = -540;
+        this.gravity = 1200;
         this.isGrounded = false;
+        this.hasDoubleJumped = false;
         this.facing = 'right';
         this.lives = 3;
         this.score = 0;
@@ -25,6 +26,7 @@ class MinerWilly {
         this.vx = 0;
         this.vy = 0;
         this.isGrounded = false;
+        this.hasDoubleJumped = false;
     }
 }
 
@@ -40,25 +42,24 @@ class MinerEngine {
 
         this.currentLevelIdx = 0;
         this.level = null;
-        this.willy = new MinerWilly(50, 480);
-        this.airSupply = 100;
+        this.willy = new MinerWilly(50, 460);
+        this.airSupply = 120;
         this.portalUnlocked = false;
-        this.state = 'MENU'; // 'MENU', 'PLAYING', 'GAMEOVER', 'VICTORY'
+        this.state = 'MENU';
 
         this.crumblingTiles = [];
+        this.prevJumpInput = false;
     }
 
     loadLevel(levelIdx = 0) {
         this.currentLevelIdx = levelIdx;
         const rawLevel = CAVERN_LEVELS[levelIdx];
 
-        // Deep copy level data
         this.level = JSON.parse(JSON.stringify(rawLevel));
         this.willy.resetPos(this.level.startPos);
         this.airSupply = this.level.airLimit;
         this.portalUnlocked = false;
 
-        // Init crumbling tile state
         this.crumblingTiles = this.level.platforms
             .filter(p => p.type === TILE_TYPES.CRUMBLING)
             .map(p => ({ ...p, crumbleTimer: -1, isDestroyed: false }));
@@ -70,7 +71,7 @@ class MinerEngine {
         if (this.state !== 'PLAYING') return;
 
         // Air Supply decay
-        this.airSupply -= dt * 1.2;
+        this.airSupply -= dt * 1.0;
         if (this.airSupply <= 0) {
             this.handlePlayerDeath("AIR EXPIRED!");
             return;
@@ -87,13 +88,24 @@ class MinerEngine {
             this.willy.facing = 'right';
         }
 
-        // Jump
-        if (input.jump && this.willy.isGrounded) {
-            this.willy.vy = this.willy.jumpForce;
-            this.willy.isGrounded = false;
-            if (this.sound) this.sound.playBounce(true, 1.4);
-            if (this.particles) this.particles.addSparks(this.willy.x + 12, this.willy.y + 34, '#00f3ff', 8);
+        // Jump & Double Jump Thruster
+        const isJumpPressed = input.jump && !this.prevJumpInput;
+        if (isJumpPressed) {
+            if (this.willy.isGrounded) {
+                this.willy.vy = this.willy.jumpForce;
+                this.willy.isGrounded = false;
+                this.willy.hasDoubleJumped = false;
+                if (this.sound) this.sound.playBounce(true, 1.4);
+                if (this.particles) this.particles.addSparks(this.willy.x + 12, this.willy.y + 34, '#00f3ff', 8);
+            } else if (!this.willy.hasDoubleJumped) {
+                this.willy.vy = this.willy.jumpForce * 0.85;
+                this.willy.hasDoubleJumped = true;
+                if (this.sound) this.sound.playBounce(true, 1.8);
+                if (this.particles) this.particles.addFloatingText(this.willy.x, this.willy.y - 10, "DOUBLE JUMP!", "#00ff66");
+                if (this.particles) this.particles.addSparks(this.willy.x + 12, this.willy.y + 34, '#00ff66', 15);
+            }
         }
+        this.prevJumpInput = input.jump;
 
         // Apply Gravity
         this.willy.vy += this.willy.gravity * dt;
@@ -117,7 +129,7 @@ class MinerEngine {
         let remainingKeys = 0;
         for (const k of this.level.keys) {
             if (!k.collected) {
-                if (this.checkAABB(this.willy, { x: k.x, y: k.y, width: 20, height: 20 })) {
+                if (this.checkAABB(this.willy, { x: k.x, y: k.y, width: 22, height: 22 })) {
                     k.collected = true;
                     this.willy.score += 500;
                     if (this.sound) this.sound.playPowerup();
@@ -188,6 +200,7 @@ class MinerEngine {
                     this.willy.y = p.y - this.willy.height;
                     this.willy.vy = 0;
                     this.willy.isGrounded = true;
+                    this.willy.hasDoubleJumped = false;
 
                     // Conveyor belts
                     if (p.type === TILE_TYPES.CONVEYOR_LEFT) {
@@ -250,7 +263,6 @@ class MinerEngine {
     render() {
         this.ctx.clearRect(0, 0, this.width, this.height);
 
-        // Background
         this.ctx.save();
         this.ctx.fillStyle = '#060610';
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -277,7 +289,6 @@ class MinerEngine {
                 this.ctx.roundRect(p.x, p.y, p.width, p.height, 4);
                 this.ctx.fill();
 
-                // Conveyor directional arrows
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.font = '12px sans-serif';
                 const arrow = p.type === TILE_TYPES.CONVEYOR_LEFT ? '«««' : '»»»';
