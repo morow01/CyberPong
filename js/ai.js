@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Cyber AI & Boss AI Controller Engine (v2.0)
+   Cyber AI & Boss AI Controller Engine (v2.2.1)
    ========================================================================== */
 
 class AIController {
@@ -18,12 +18,18 @@ class AIController {
     update(dt, paddle, balls, powerUps, playerPaddle, canvasHeight, canvasWidth) {
         if (!paddle || balls.length === 0) return;
 
+        const isLeft = paddle.x < canvasWidth / 2;
+
+        // Select target ball heading towards this paddle
         let targetBall = balls[0];
         for (const b of balls) {
-            if (b.vx > 0 && b.x > (targetBall ? targetBall.x : 0)) {
+            const isHeadingTowardsMe = isLeft ? b.vx < 0 : b.vx > 0;
+            if (isHeadingTowardsMe && (isLeft ? b.x < targetBall.x : b.x > targetBall.x)) {
                 targetBall = b;
             }
         }
+
+        const isMovingTowardsMe = isLeft ? targetBall.vx < 0 : targetBall.vx > 0;
 
         // --- Standard Difficulties --- //
         if (this.difficulty === 'easy') {
@@ -35,9 +41,11 @@ class AIController {
             this.movePaddle(paddle, this.targetY, 4.8, dt, canvasHeight);
 
         } else if (this.difficulty === 'medium') {
-            if (targetBall.vx > 0) {
-                const timeToGoal = (paddle.x - targetBall.x) / targetBall.vx;
+            if (isMovingTowardsMe) {
+                const paddleTargetX = isLeft ? paddle.x + paddle.width : paddle.x;
+                const timeToGoal = (paddleTargetX - targetBall.x) / targetBall.vx;
                 let predictedY = targetBall.y + targetBall.vy * timeToGoal;
+
                 while (predictedY < 0 || predictedY > canvasHeight) {
                     if (predictedY < 0) predictedY = -predictedY;
                     if (predictedY > canvasHeight) predictedY = 2 * canvasHeight - predictedY;
@@ -49,9 +57,11 @@ class AIController {
             this.movePaddle(paddle, this.targetY, 7.5, dt, canvasHeight);
 
         } else if (this.difficulty === 'impossible') {
-            if (targetBall.vx > 0) {
-                const timeToGoal = (paddle.x - targetBall.x) / targetBall.vx;
+            if (isMovingTowardsMe) {
+                const paddleTargetX = isLeft ? paddle.x + paddle.width : paddle.x;
+                const timeToGoal = (paddleTargetX - targetBall.x) / targetBall.vx;
                 let predictedY = targetBall.y + targetBall.vy * timeToGoal;
+
                 while (predictedY < 0 || predictedY > canvasHeight) {
                     if (predictedY < 0) predictedY = -predictedY;
                     if (predictedY > canvasHeight) predictedY = 2 * canvasHeight - predictedY;
@@ -68,12 +78,10 @@ class AIController {
 
         // --- Boss Behaviors --- //
         } else if (this.difficulty === 'boss_mothership') {
-            // Mothership Core: High stability, heavy movement
             this.targetY = targetBall.y;
             this.movePaddle(paddle, this.targetY, 8.5, dt, canvasHeight);
 
         } else if (this.difficulty === 'boss_glitch') {
-            // Glitch Overlord: Teleports every 2.2 seconds!
             this.glitchTimer += dt;
             if (this.glitchTimer > 2.2) {
                 this.glitchTimer = 0;
@@ -84,7 +92,6 @@ class AIController {
             }
 
         } else if (this.difficulty === 'boss_twin') {
-            // Twin Cores: Moves towards ball
             this.targetY = targetBall.y;
             this.movePaddle(paddle, this.targetY, 9.0, dt, canvasHeight);
         }
