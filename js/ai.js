@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Cyber AI & Boss AI Controller Engine (v2.2.2)
+   Cyber AI & Boss AI Controller Engine (v2.2.3)
    ========================================================================== */
 
 class AIController {
@@ -31,9 +31,18 @@ class AIController {
 
         const isMovingTowardsMe = isLeft ? targetBall.vx < 0 : targetBall.vx > 0;
 
-        // Smooth sine variation to hit different parts of paddle (prevents flat horizontal loop)
+        // Dynamic target variation
         this.variationAngleTimer += 1.5 * dt;
         const paddleHitOffset = Math.sin(this.variationAngleTimer) * 22;
+
+        // Auto-fire Laser Ammo whenever equipped and aligned with opponent!
+        if (paddle.laserAmmo > 0 && playerPaddle) {
+            const paddleCenter = paddle.y + paddle.height / 2;
+            const enemyCenter = playerPaddle.y + playerPaddle.height / 2;
+            if (Math.abs(paddleCenter - enemyCenter) < 70) {
+                paddle.shootLaser = true;
+            }
+        }
 
         if (this.difficulty === 'easy') {
             if (this.reactionTimer > 0.3) {
@@ -74,10 +83,6 @@ class AIController {
                 this.targetY = powerUps.length > 0 ? powerUps[0].y : canvasHeight / 2;
             }
             this.movePaddle(paddle, this.targetY, 10.5, dt, canvasHeight);
-
-            if (paddle.laserAmmo > 0 && Math.abs(paddle.y - playerPaddle.y) < 40) {
-                paddle.shootLaser = true;
-            }
 
         } else if (this.difficulty === 'boss_mothership') {
             this.targetY = targetBall.y + paddleHitOffset;
