@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v2.2 Core Game Physics & State Engine
+   CyberPong v2.2.2 Core Game Physics & State Engine
    ========================================================================== */
 
 const POWERUP_TYPES = {
@@ -267,7 +267,7 @@ class GameEngine {
         this.width = canvas.width;
         this.height = canvas.height;
 
-        this.mode = '1p'; // '1p', '2p', 'boss', 'demo'
+        this.mode = '1p';
         this.bossStage = 1;
         this.bossHealth = 5;
         this.maxBossHealth = 5;
@@ -374,11 +374,9 @@ class GameEngine {
         this.p2.update(dt);
         this.bumpers.forEach(b => b.update(dt));
 
-        // AI Logic Handling for 1P, Boss, and Demo Mode
         if (this.mode === '1p' || this.mode === 'boss') {
             this.ai2.update(dt, this.p2, this.balls, this.powerUps, this.p1, this.height, this.width);
         } else if (this.mode === 'demo') {
-            // AI vs AI Demo Mode
             this.ai1.update(dt, this.p1, this.balls, this.powerUps, this.p2, this.height, this.width);
             this.ai2.update(dt, this.p2, this.balls, this.powerUps, this.p1, this.height, this.width);
         }
@@ -558,7 +556,12 @@ class GameEngine {
 
         const relativeIntersectY = (paddle.y + paddle.height / 2) - ball.y;
         const normalizedIntersectY = relativeIntersectY / (paddle.height / 2);
-        const bounceAngle = normalizedIntersectY * (Math.PI / 3.5);
+        let bounceAngle = normalizedIntersectY * (Math.PI / 3.5);
+
+        // Nudge horizontal bounces to prevent infinite flat loop
+        if (Math.abs(bounceAngle) < 0.1) {
+            bounceAngle = (Math.random() > 0.5 ? 1 : -1) * (0.15 + Math.random() * 0.2);
+        }
 
         const currentSpeed = Math.hypot(ball.vx, ball.vy);
         const newSpeed = Math.min(750, currentSpeed * 1.03);
@@ -640,7 +643,6 @@ class GameEngine {
         this.balls.splice(ballIndex, 1);
         this.stats.currentRally = 0;
 
-        // Check Victory / Defeat
         if ((this.mode !== 'boss' && (this.p1.score >= this.targetScore || this.p2.score >= this.targetScore)) || (this.mode === 'boss' && (this.bossHealth <= 0 || this.p2.score >= 5))) {
             this.state = 'GAMEOVER';
             this.sound.playVictory();
@@ -663,7 +665,6 @@ class GameEngine {
 
         this.particles.drawBackgroundGrid(this.ctx, this.width, this.height);
 
-        // Render Trajectory Guide if Sight Power-Up is active OR Aim Assist toggle is enabled!
         if (this.balls.length > 0) {
             const b = this.balls[0];
             if (b.vx < 0 && (this.p1.hasSight || this.showAimAssist)) {

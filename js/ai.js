@@ -1,14 +1,15 @@
 /* ==========================================================================
-   Cyber AI & Boss AI Controller Engine (v2.2.1)
+   Cyber AI & Boss AI Controller Engine (v2.2.2)
    ========================================================================== */
 
 class AIController {
     constructor(difficulty = 'medium') {
-        this.difficulty = difficulty; // 'easy', 'medium', 'impossible', 'boss_mothership', 'boss_glitch', 'boss_twin'
+        this.difficulty = difficulty;
         this.targetY = 300;
         this.reactionTimer = 0;
         this.errorOffset = 0;
         this.glitchTimer = 0;
+        this.variationAngleTimer = Math.random() * Math.PI * 2;
     }
 
     setDifficulty(diff) {
@@ -20,7 +21,6 @@ class AIController {
 
         const isLeft = paddle.x < canvasWidth / 2;
 
-        // Select target ball heading towards this paddle
         let targetBall = balls[0];
         for (const b of balls) {
             const isHeadingTowardsMe = isLeft ? b.vx < 0 : b.vx > 0;
@@ -31,7 +31,10 @@ class AIController {
 
         const isMovingTowardsMe = isLeft ? targetBall.vx < 0 : targetBall.vx > 0;
 
-        // --- Standard Difficulties --- //
+        // Smooth sine variation to hit different parts of paddle (prevents flat horizontal loop)
+        this.variationAngleTimer += 1.5 * dt;
+        const paddleHitOffset = Math.sin(this.variationAngleTimer) * 22;
+
         if (this.difficulty === 'easy') {
             if (this.reactionTimer > 0.3) {
                 this.reactionTimer = 0;
@@ -50,7 +53,7 @@ class AIController {
                     if (predictedY < 0) predictedY = -predictedY;
                     if (predictedY > canvasHeight) predictedY = 2 * canvasHeight - predictedY;
                 }
-                this.targetY = predictedY;
+                this.targetY = predictedY + paddleHitOffset;
             } else {
                 this.targetY = canvasHeight / 2;
             }
@@ -66,7 +69,7 @@ class AIController {
                     if (predictedY < 0) predictedY = -predictedY;
                     if (predictedY > canvasHeight) predictedY = 2 * canvasHeight - predictedY;
                 }
-                this.targetY = predictedY;
+                this.targetY = predictedY + paddleHitOffset * 0.7;
             } else {
                 this.targetY = powerUps.length > 0 ? powerUps[0].y : canvasHeight / 2;
             }
@@ -76,9 +79,8 @@ class AIController {
                 paddle.shootLaser = true;
             }
 
-        // --- Boss Behaviors --- //
         } else if (this.difficulty === 'boss_mothership') {
-            this.targetY = targetBall.y;
+            this.targetY = targetBall.y + paddleHitOffset;
             this.movePaddle(paddle, this.targetY, 8.5, dt, canvasHeight);
 
         } else if (this.difficulty === 'boss_glitch') {
@@ -88,11 +90,11 @@ class AIController {
                 paddle.y = Math.random() * (canvasHeight - paddle.height);
                 if (window.sound) window.sound.playWarp();
             } else {
-                this.movePaddle(paddle, targetBall.y, 6.0, dt, canvasHeight);
+                this.movePaddle(paddle, targetBall.y + paddleHitOffset, 6.0, dt, canvasHeight);
             }
 
         } else if (this.difficulty === 'boss_twin') {
-            this.targetY = targetBall.y;
+            this.targetY = targetBall.y + paddleHitOffset;
             this.movePaddle(paddle, this.targetY, 9.0, dt, canvasHeight);
         }
     }
