@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+
+# System / Scratch files
+.system_generated/
+scratch/
+.DS_Store
+Thumbs.db
