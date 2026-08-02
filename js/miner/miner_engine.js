@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Manic Miner: Cyber Edition - Platformer Physics & Logic Engine (v3.0.2)
+   Manic Miner: Cyber Edition - Platformer Physics & Logic Engine (v3.0.3)
    ========================================================================== */
 
 class MinerWilly {
@@ -18,6 +18,7 @@ class MinerWilly {
         this.facing = 'right';
         this.lives = 3;
         this.score = 0;
+        this.invulnerableTimer = 0;
     }
 
     resetPos(startPos) {
@@ -27,6 +28,7 @@ class MinerWilly {
         this.vy = 0;
         this.isGrounded = false;
         this.hasDoubleJumped = false;
+        this.invulnerableTimer = 1.5; // 1.5s invincibility on respawn
     }
 }
 
@@ -56,6 +58,10 @@ class MinerEngine {
         const rawLevel = CAVERN_LEVELS[levelIdx];
 
         this.level = JSON.parse(JSON.stringify(rawLevel));
+        if (levelIdx === 0) {
+            this.willy.lives = 3;
+            this.willy.score = 0;
+        }
         this.willy.resetPos(this.level.startPos);
         this.airSupply = this.level.airLimit;
         this.portalUnlocked = false;
@@ -69,6 +75,11 @@ class MinerEngine {
 
     update(dt, input) {
         if (this.state !== 'PLAYING') return;
+
+        // Invulnerability Timer Decay
+        if (this.willy.invulnerableTimer > 0) {
+            this.willy.invulnerableTimer -= dt;
+        }
 
         // Air Supply decay
         this.airSupply -= dt * 1.0;
@@ -154,14 +165,14 @@ class MinerEngine {
             }
         }
 
-        // Enemy Patrol & Collision Check
+        // Enemy Patrol & Collision Check (Protected by Invulnerability)
         for (const e of this.level.enemies) {
             e.x += e.speed * dt;
             if (e.x <= e.minX || e.x >= e.maxX) {
                 e.speed *= -1;
             }
 
-            if (this.checkAABB(this.willy, e)) {
+            if (this.willy.invulnerableTimer <= 0 && this.checkAABB(this.willy, e)) {
                 this.handlePlayerDeath("MUTANT COLLISION!");
                 return;
             }
@@ -196,24 +207,22 @@ class MinerEngine {
     resolveVerticalCollisions(dt) {
         for (const p of this.getAllActivePlatforms()) {
             if (this.checkAABB(this.willy, p)) {
-                if (this.willy.vy > 0) { // Landing on top
+                if (this.willy.vy > 0) {
                     this.willy.y = p.y - this.willy.height;
                     this.willy.vy = 0;
                     this.willy.isGrounded = true;
                     this.willy.hasDoubleJumped = false;
 
-                    // Conveyor belts
                     if (p.type === TILE_TYPES.CONVEYOR_LEFT) {
                         this.willy.x -= 120 * dt;
                     } else if (p.type === TILE_TYPES.CONVEYOR_RIGHT) {
                         this.willy.x += 120 * dt;
                     }
 
-                    // Crumbling tile trigger
                     if (p.type === TILE_TYPES.CRUMBLING && p.crumbleTimer < 0) {
                         p.crumbleTimer = 0;
                     }
-                } else if (this.willy.vy < 0) { // Hitting ceiling
+                } else if (this.willy.vy < 0) {
                     this.willy.y = p.y + p.height;
                     this.willy.vy = 0;
                 }
@@ -237,8 +246,11 @@ class MinerEngine {
     }
 
     handlePlayerDeath(reason) {
+        if (this.willy.invulnerableTimer > 0) return;
+
         this.willy.lives--;
         if (this.sound) this.sound.playLaser();
+        if (this.particles) this.particles.addSparks(this.willy.x + 12, this.willy.y + 17, '#ff0055', 25);
 
         if (this.willy.lives <= 0) {
             this.state = 'GAMEOVER';
@@ -338,18 +350,20 @@ class MinerEngine {
             this.ctx.fillText(e.icon, e.x, e.y + 20);
         }
 
-        // Draw Miner Willy Player
-        this.ctx.shadowColor = '#00f3ff';
-        this.ctx.shadowBlur = 18;
-        this.ctx.fillStyle = '#00f3ff';
-        this.ctx.beginPath();
-        this.ctx.roundRect(this.willy.x, this.willy.y, this.willy.width, this.willy.height, 6);
-        this.ctx.fill();
+        // Draw Miner Willy Player (Flashes when invulnerable)
+        const isFlashing = this.willy.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0;
+        if (!isFlashing) {
+            this.ctx.shadowColor = '#00f3ff';
+            this.ctx.shadowBlur = 18;
+            this.ctx.fillStyle = '#00f3ff';
+            this.ctx.beginPath();
+            this.ctx.roundRect(this.willy.x, this.willy.y, this.willy.width, this.willy.height, 6);
+            this.ctx.fill();
 
-        // Willy Eyes
-        this.ctx.fillStyle = '#ffffff';
-        const eyeX = this.willy.facing === 'right' ? this.willy.x + 15 : this.willy.x + 4;
-        this.ctx.fillRect(eyeX, this.willy.y + 6, 5, 5);
+            this.ctx.fillStyle = '#ffffff';
+            const eyeX = this.willy.facing === 'right' ? this.willy.x + 15 : this.willy.x + 4;
+            this.ctx.fillRect(eyeX, this.willy.y + 6, 5, 5);
+        }
 
         // Draw Particles
         if (this.particles) this.particles.drawParticles(this.ctx);
