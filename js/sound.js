@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Sound Synth Module (Web Audio API)
+   Sound Synth & Melodic BGM Module (Web Audio API) - v2.1.0
    ========================================================================== */
 
 class SoundSynth {
@@ -9,7 +9,20 @@ class SoundSynth {
         this.volume = 0.5;
         this.muted = false;
         this.initialized = false;
+
+        // Melodic BGM State
         this.bgmEnabled = false;
+        this.bgmTimer = null;
+        this.bgmStep = 0;
+
+        // 80s Synthwave Chord Sequence (Ambient Arpeggio & Chords)
+        // Am (A3, C4, E4) -> F (F3, A3, C4) -> C (C4, E4, G4) -> G (G3, B3, D4)
+        this.chords = [
+            [220.00, 261.63, 329.63], // Am
+            [174.61, 220.00, 261.63], // F
+            [261.63, 329.63, 392.00], // C
+            [196.00, 246.94, 293.66]  // G
+        ];
     }
 
     init() {
@@ -44,13 +57,73 @@ class SoundSynth {
         this.setVolume(this.volume);
     }
 
+    // --- Melodic BGM Engine --- //
     toggleBgm() {
+        this.init();
         this.bgmEnabled = !this.bgmEnabled;
+
+        if (this.bgmEnabled) {
+            this.startBgmLoop();
+        } else {
+            this.stopBgmLoop();
+        }
         return this.bgmEnabled;
     }
 
+    startBgmLoop() {
+        this.stopBgmLoop();
+        this.bgmStep = 0;
+
+        // Play chord beat every 800ms
+        this.bgmTimer = setInterval(() => {
+            if (this.bgmEnabled && !this.muted && this.ctx) {
+                this.playMelodicChordStep();
+            }
+        }, 800);
+    }
+
+    stopBgmLoop() {
+        if (this.bgmTimer) {
+            clearInterval(this.bgmTimer);
+            this.bgmTimer = null;
+        }
+    }
+
+    playMelodicChordStep() {
+        if (!this.ctx) return;
+        this.resume();
+
+        const now = this.ctx.currentTime;
+        const chordIndex = Math.floor(this.bgmStep / 4) % this.chords.length;
+        const chord = this.chords[chordIndex];
+        const noteFreq = chord[this.bgmStep % chord.length];
+        this.bgmStep++;
+
+        // Filtered soft sine oscillator for ambient retro feel
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(noteFreq, now);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(650, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.06, now + 0.08); // Soft attack
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7); // Gentle release
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 0.75);
+    }
+
     setBgmSpeed(multiplier = 1.0) {
-        // No-op for clear audio
+        // Keeps ambient tempo smooth
     }
 
     // --- Sound Effects --- //
@@ -266,7 +339,7 @@ class SoundSynth {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, now);
 
-            gain.gain.setValueAtTime(0, now);
+            gain.gain.setValueAtTime(0);
             gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
 
