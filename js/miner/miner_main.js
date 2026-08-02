@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Manic Miner: Cyber Edition - Application Entrypoint & Input Controller
+   Manic Miner: Cyber Edition - Application Entrypoint & Input Controller (v3.0.1)
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,42 +33,56 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', () => window.sound.init(), { once: true });
     document.addEventListener('click', () => window.sound.init(), { once: true });
 
-    btnStartGame.addEventListener('click', () => {
-        startModal.classList.remove('active');
-        miner.loadLevel(0);
-    });
+    if (btnStartGame) {
+        btnStartGame.addEventListener('click', () => {
+            if (startModal) startModal.classList.remove('active');
+            miner.loadLevel(0);
+        });
+    }
 
-    btnResume.addEventListener('click', () => {
-        pauseModal.classList.remove('active');
-        miner.state = 'PLAYING';
-    });
+    if (btnResume) {
+        btnResume.addEventListener('click', () => {
+            if (pauseModal) pauseModal.classList.remove('active');
+            miner.state = 'PLAYING';
+        });
+    }
 
-    btnQuit.addEventListener('click', () => {
-        pauseModal.classList.remove('active');
-        startModal.classList.add('active');
-        miner.state = 'MENU';
-    });
+    if (btnQuit) {
+        btnQuit.addEventListener('click', () => {
+            if (pauseModal) pauseModal.classList.remove('active');
+            if (startModal) startModal.classList.add('active');
+            miner.state = 'MENU';
+        });
+    }
 
-    btnPlayAgain.addEventListener('click', () => {
-        gameOverModal.classList.remove('active');
-        miner.loadLevel(0);
-    });
+    if (btnPlayAgain) {
+        btnPlayAgain.addEventListener('click', () => {
+            if (gameOverModal) gameOverModal.classList.remove('active');
+            miner.loadLevel(0);
+        });
+    }
 
-    btnReturnMenu.addEventListener('click', () => {
-        gameOverModal.classList.remove('active');
-        startModal.classList.add('active');
-        miner.state = 'MENU';
-    });
+    if (btnReturnMenu) {
+        btnReturnMenu.addEventListener('click', () => {
+            if (gameOverModal) gameOverModal.classList.remove('active');
+            if (startModal) startModal.classList.add('active');
+            miner.state = 'MENU';
+        });
+    }
 
-    btnSoundToggle.addEventListener('click', () => {
-        window.sound.muted = !window.sound.muted;
-        btnSoundToggle.textContent = window.sound.muted ? '🔇' : '🔊';
-        window.sound.setMuted(window.sound.muted);
-    });
+    if (btnSoundToggle) {
+        btnSoundToggle.addEventListener('click', () => {
+            window.sound.muted = !window.sound.muted;
+            btnSoundToggle.textContent = window.sound.muted ? '🔇' : '🔊';
+            window.sound.setMuted(window.sound.muted);
+        });
+    }
 
-    volumeSlider.addEventListener('input', (e) => {
-        window.sound.setVolume(parseFloat(e.target.value));
-    });
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', (e) => {
+            window.sound.setVolume(parseFloat(e.target.value));
+        });
+    }
 
     window.addEventListener('keydown', (e) => {
         keys[e.code] = true;
@@ -76,10 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.code === 'KeyP' || e.code === 'Escape') {
             if (miner.state === 'PLAYING') {
                 miner.state = 'PAUSED';
-                pauseModal.classList.add('active');
+                if (pauseModal) pauseModal.classList.add('active');
             } else if (miner.state === 'PAUSED') {
                 miner.state = 'PLAYING';
-                pauseModal.classList.remove('active');
+                if (pauseModal) pauseModal.classList.remove('active');
             }
         }
     });
@@ -107,29 +121,31 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateHUD() {
         if (!miner.level) return;
 
-        levelNameEl.textContent = miner.level.name;
-        scoreText.textContent = miner.willy.score;
-        livesText.textContent = '❤️'.repeat(miner.willy.lives);
+        if (levelNameEl) levelNameEl.textContent = miner.level.name;
+        if (scoreText) scoreText.textContent = miner.willy.score;
+        if (livesText) livesText.textContent = '❤️'.repeat(miner.willy.lives);
 
         const airPct = Math.max(0, (miner.airSupply / miner.level.airLimit) * 100);
-        airFill.style.width = `${airPct}%`;
-        airText.textContent = `${Math.ceil(miner.airSupply)}s`;
+        if (airFill) airFill.style.width = `${airPct}%`;
+        if (airText) airText.textContent = `${Math.ceil(miner.airSupply)}s`;
 
-        if ((miner.state === 'GAMEOVER' || miner.state === 'VICTORY') && !gameOverModal.classList.contains('active')) {
+        if (gameOverModal && (miner.state === 'GAMEOVER' || miner.state === 'VICTORY') && !gameOverModal.classList.contains('active')) {
             const winnerText = document.getElementById('winnerText');
             const finalScoreText = document.getElementById('finalScoreText');
             const statsSummary = document.getElementById('statsSummary');
 
-            if (miner.state === 'VICTORY') {
-                winnerText.textContent = "ALL CAVERNS ESCAPED!";
-                winnerText.style.color = "#00ff66";
-            } else {
-                winnerText.textContent = "MINER WILLY DEFEATED!";
-                winnerText.style.color = "#ff0055";
+            if (winnerText) {
+                if (miner.state === 'VICTORY') {
+                    winnerText.textContent = "ALL CAVERNS ESCAPED!";
+                    winnerText.style.color = "#00ff66";
+                } else {
+                    winnerText.textContent = "MINER WILLY DEFEATED!";
+                    winnerText.style.color = "#ff0055";
+                }
             }
 
-            finalScoreText.textContent = `SCORE: ${miner.willy.score}`;
-            statsSummary.innerHTML = `<div>🏆 Stage Reached: <strong>${miner.currentLevelIdx + 1}</strong></div>`;
+            if (finalScoreText) finalScoreText.textContent = `SCORE: ${miner.willy.score}`;
+            if (statsSummary) statsSummary.innerHTML = `<div>🏆 Stage Reached: <strong>${miner.currentLevelIdx + 1}</strong></div>`;
             gameOverModal.classList.add('active');
         }
     }
