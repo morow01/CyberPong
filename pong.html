@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberPong v3.0: Neon Evolution</title>
+    <meta name="description" content="A modern cyberpunk action Pong game featuring 1P vs AI, 2P local multiplayer, AI vs AI Demo mode, Dual Gamepad Controller support, Boss Fights, Ultimate Abilities, and Aim Assist.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="appContainer">
+        <!-- Top HUD Header -->
+        <header id="gameHud">
+            <div class="player-hud p1-hud">
+                <div class="player-profile">
+                    <a href="index.html" class="icon-btn back-btn" title="Back to Game Hub">🏠 HUB</a>
+                    <span class="player-tag">P1</span>
+                    <span class="player-name" id="p1Name">PLAYER 1</span>
+                    <span class="gamepad-badge" id="p1GamepadBadge" title="Controller 1 Status">🎮 P1</span>
+                </div>
+                <div class="score-display" id="p1Score">0</div>
+                <div class="hud-meters">
+                    <div class="ultimate-wrapper" title="Ultimate Ability (Key: Q / Gamepad Y)">
+                        <div class="ult-label">ULT [Q/Y]</div>
+                        <div class="ult-bar"><div class="ult-fill" id="p1UltFill"></div></div>
+                    </div>
+                    <div class="powerup-indicators" id="p1Powerups"></div>
+                </div>
+            </div>
+
+            <!-- Game Center Status / Title -->
+            <div class="hud-center">
+                <div class="title-row">
+                    <h1 class="game-logo">CYBER<span class="highlight">PONG</span></h1>
+                    <span class="version-badge">v3.0.0</span>
+                </div>
+                <div class="match-info" id="matchInfo">FIRST TO 7 WINS</div>
+                
+                <!-- Boss Health Bar -->
+                <div id="bossBarWrapper" class="boss-bar-wrapper" style="display: none;">
+                    <div class="boss-label" id="bossName">MOTHERSHIP CORE</div>
+                    <div class="boss-health-track">
+                        <div class="boss-health-fill" id="bossHealthFill"></div>
+                    </div>
+                </div>
+
+                <div class="audio-controls">
+                    <button id="btnSoundToggle" class="icon-btn" title="Toggle SFX">🔊</button>
+                    <button id="btnBgmToggle" class="icon-btn" title="Toggle Synthwave BGM">🎵 BGM: OFF</button>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" title="Volume">
+                </div>
+            </div>
+
+            <!-- Player 2 / Boss Status -->
+            <div class="player-hud p2-hud">
+                <div class="hud-meters">
+                    <div class="ultimate-wrapper" title="Ultimate Ability (Key: SHIFT / Gamepad Y)">
+                        <div class="ult-label">ULT [SHIFT/Y]</div>
+                        <div class="ult-bar"><div class="ult-fill" id="p2UltFill"></div></div>
+                    </div>
+                    <div class="powerup-indicators" id="p2Powerups"></div>
+                </div>
+                <div class="score-display" id="p2Score">0</div>
+                <div class="player-profile">
+                    <span class="gamepad-badge" id="p2GamepadBadge" title="Controller 2 Status">🎮 P2</span>
+                    <span class="player-name" id="p2Name">CYBER AI</span>
+                    <span class="player-tag p2-tag">P2</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Arena Display -->
+        <main id="arenaWrapper">
+            <canvas id="gameCanvas" width="1000" height="600"></canvas>
+
+            <!-- On-screen Legend / Guide Bar -->
+            <div id="legendBar">
+                <div class="legend-item"><span class="icon">👁️</span> Cyber Sight</div>
+                <div class="legend-item"><span class="icon">💥</span> Bumper</div>
+                <div class="legend-item"><span class="icon">⚡</span> Speed</div>
+                <div class="legend-item"><span class="icon">🛡️</span> Shield</div>
+                <div class="legend-item"><span class="icon">🧲</span> Magnet</div>
+                <div class="legend-item"><span class="icon">❄️</span> Frost</div>
+                <div class="legend-item"><span class="icon">📏</span> Titan</div>
+                <div class="legend-item"><span class="icon">🔫</span> Laser</div>
+                <div class="legend-item"><span class="icon">🌟</span> Ultimate</div>
+            </div>
+
+            <!-- MODAL: Start Menu -->
+            <div id="startModal" class="modal-overlay active">
+                <div class="modal-card glass-panel">
+                    <div class="modal-header">
+                        <div class="header-title-wrap">
+                            <h2>CYBER<span class="highlight">PONG</span> EVOLUTION</h2>
+                            <span class="version-badge">v3.0.0</span>
+                        </div>
+                        <p class="subtitle">Keyboard, Mouse, Dual Gamepads & Dynamic AI Demo Mode 🎮</p>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Mode Selector -->
+                        <div class="section-title">CHOOSE GAME MODE</div>
+                        <div class="mode-grid mode-grid-4">
+                            <button id="btnMode1P" class="mode-card active">
+                                <div class="mode-icon">🤖</div>
+                                <div class="mode-title">1 PLAYER</div>
+                                <div class="mode-desc">VS Cyber AI</div>
+                            </button>
+                            <button id="btnMode2P" class="mode-card">
+                                <div class="mode-icon">⚔️</div>
+                                <div class="mode-title">2 PLAYERS</div>
+                                <div class="mode-desc">Local 1v1 Co-op</div>
+                            </button>
+                            <button id="btnModeBoss" class="mode-card special-mode">
+                                <div class="mode-icon">👾</div>
+                                <div class="mode-title">BOSS FIGHT</div>
+                                <div class="mode-desc">3 Boss Stages</div>
+                            </button>
+                            <button id="btnModeDemo" class="mode-card demo-mode">
+                                <div class="mode-icon">📺</div>
+                                <div class="mode-title">AI DEMO</div>
+                                <div class="mode-desc">Dynamic AI vs AI</div>
+                            </button>
+                        </div>
+
+                        <!-- AI Difficulty Selection (Only visible in 1P) -->
+                        <div id="aiDifficultyGroup" class="setting-group">
+                            <label class="setting-label">AI DIFFICULTY</label>
+                            <div class="button-group">
+                                <button class="btn-select btn-diff" data-diff="easy">EASY</button>
+                                <button class="btn-select btn-diff active" data-diff="medium">MEDIUM</button>
+                                <button class="btn-select btn-diff" data-diff="impossible">CYBER AI</button>
+                            </div>
+                        </div>
+
+                        <!-- Visual Theme & Trajectory Assist Selector -->
+                        <div class="setting-group">
+                            <label class="setting-label">VISUAL THEME & ASSIST</label>
+                            <div class="button-group">
+                                <button class="btn-select btn-theme active" data-theme="cyber">CYBER NEON</button>
+                                <button class="btn-select btn-theme" data-theme="synthwave">SYNTHWAVE 80s</button>
+                                <button class="btn-select btn-theme" data-theme="matrix">MATRIX CODE</button>
+                                <button id="btnAimAssistToggle" class="btn-select btn-toggle" title="Toggle Trajectory Aim Assist Line">🎯 AIM: OFF</button>
+                            </div>
+                        </div>
+
+                        <!-- Target Score Selection -->
+                        <div class="setting-group" id="targetScoreGroup">
+                            <label class="setting-label">TARGET SCORE</label>
+                            <div class="button-group">
+                                <button class="btn-select btn-score" data-score="5">5 PTS</button>
+                                <button class="btn-select btn-score active" data-score="7">7 PTS</button>
+                                <button class="btn-select btn-score" data-score="10">10 PTS</button>
+                                <button class="btn-select btn-score" data-score="15">15 PTS</button>
+                            </div>
+                        </div>
+
+                        <!-- Gamepad & Control Guide -->
+                        <div class="controls-guide">
+                            <div class="control-box">
+                                <span class="box-title">PLAYER 1 (Keyboard/Controller 1)</span>
+                                <div class="key-combo"><kbd>W</kbd>/<kbd>S</kbd> or <kbd>Left Stick</kbd> : Move</div>
+                                <div class="key-combo"><kbd>SPACE</kbd> or <kbd>Button A</kbd> : Laser</div>
+                                <div class="key-combo"><kbd>Q</kbd> or <kbd>Button Y</kbd> : ULTIMATE</div>
+                            </div>
+                            <div class="control-box">
+                                <span class="box-title">PLAYER 2 (Keyboard/Controller 2)</span>
+                                <div class="key-combo"><kbd>↑</kbd>/<kbd>↓</kbd> or <kbd>Left Stick</kbd> : Move</div>
+                                <div class="key-combo"><kbd>ENTER</kbd> or <kbd>Button A</kbd> : Laser</div>
+                                <div class="key-combo"><kbd>SHIFT</kbd> or <kbd>Button Y</kbd> : ULTIMATE</div>
+                            </div>
+                        </div>
+
+                        <!-- Gamepad Status Footer Bar -->
+                        <div id="gamepadStatusFooter" class="gamepad-footer">
+                            <div class="gamepad-status-item" id="gp1Status">🎮 Controller 1: <span class="status-off">Disconnected</span></div>
+                            <div class="gamepad-status-item" id="gp2Status">🎮 Controller 2: <span class="status-off">Disconnected</span></div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button id="btnStartGame" class="btn-primary glow-btn">LAUNCH MATCH</button>
+                        <a href="index.html" class="btn-secondary text-center">RETURN TO HUB</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: Pause Screen -->
+            <div id="pauseModal" class="modal-overlay">
+                <div class="modal-card glass-panel sm">
+                    <h2>MATCH PAUSED</h2>
+                    <p>Press <kbd>P</kbd>, <kbd>ESC</kbd> or <kbd>START</kbd> on gamepad</p>
+                    <div class="modal-actions">
+                        <button id="btnResume" class="btn-primary">RESUME</button>
+                        <a href="index.html" class="btn-secondary">GAME HUB</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: Game Over Screen -->
+            <div id="gameOverModal" class="modal-overlay">
+                <div class="modal-card glass-panel glow-border">
+                    <div class="winner-trophy" id="trophyIcon">🏆</div>
+                    <h2 id="winnerText">MATCH COMPLETE</h2>
+                    <div class="final-score" id="finalScoreText">7 - 4</div>
+                    <div class="stats-summary" id="statsSummary"></div>
+                    <div class="modal-actions">
+                        <button id="btnPlayAgain" class="btn-primary glow-btn">REPLAY MATCH</button>
+                        <a href="index.html" class="btn-secondary">GAME HUB</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Game Engine Scripts -->
+    <script src="js/sound.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

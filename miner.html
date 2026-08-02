@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manic Miner: Cyber Edition v3.0</title>
+    <meta name="description" content="A modern remaster of the classic 1983 Spectrum platformer Manic Miner with cyber neon visuals, crumbling tiles, conveyors, and air meters.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .air-meter-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 220px;
+        }
+
+        .air-track {
+            flex: 1;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .air-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ff66, #00f3ff);
+            box-shadow: 0 0 10px #00ff66;
+            transition: width 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="appContainer">
+        <!-- Top HUD Header -->
+        <header id="gameHud">
+            <div class="player-hud p1-hud">
+                <div class="player-profile">
+                    <a href="index.html" class="icon-btn back-btn" title="Back to Game Hub">🏠 HUB</a>
+                    <span class="player-tag" style="background: rgba(255, 170, 0, 0.2); color: #ffaa00; border-color: #ffaa00;">WILLY</span>
+                    <span class="player-name" id="livesText">❤️❤️❤️</span>
+                </div>
+            </div>
+
+            <!-- Game Center Status / Title -->
+            <div class="hud-center">
+                <div class="title-row">
+                    <h1 class="game-logo" style="color: #ffaa00;">MANIC <span class="highlight" style="color: #ff0055; text-shadow: 0 0 12px #ff0055;">MINER</span></h1>
+                    <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.0.0</span>
+                </div>
+                <div class="match-info" id="levelName">THE CENTRAL CAVERN</div>
+
+                <div class="air-meter-wrapper" title="Air Supply Oxygen Meter">
+                    <span style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--neon-cyan);">AIR</span>
+                    <div class="air-track">
+                        <div class="air-fill" id="airFill"></div>
+                    </div>
+                    <span id="airText" style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--text-muted);">100s</span>
+                </div>
+            </div>
+
+            <!-- Score Status -->
+            <div class="player-hud p2-hud">
+                <div class="audio-controls" style="margin-right: 1rem;">
+                    <button id="btnSoundToggle" class="icon-btn" title="Toggle SFX">🔊</button>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" title="Volume">
+                </div>
+                <div class="score-display" id="scoreText" style="color: #ffaa00; text-shadow: 0 0 16px #ffaa00;">0</div>
+            </div>
+        </header>
+
+        <!-- Main Arena Display -->
+        <main id="arenaWrapper">
+            <canvas id="gameCanvas" width="1000" height="600"></canvas>
+
+            <!-- On-screen Legend / Guide Bar -->
+            <div id="legendBar">
+                <div class="legend-item"><span class="icon">🗝️</span> Collect Crystals</div>
+                <div class="legend-item"><span class="icon">🧱</span> Crumbling Block</div>
+                <div class="legend-item"><span class="icon">«««</span> Conveyor Belt</div>
+                <div class="legend-item"><span class="icon">🌀</span> Portal Exit</div>
+                <div class="legend-item"><span class="icon">💨</span> Air Oxygen Meter</div>
+            </div>
+
+            <!-- MODAL: Start Menu -->
+            <div id="startModal" class="modal-overlay active">
+                <div class="modal-card glass-panel">
+                    <div class="modal-header">
+                        <div class="header-title-wrap">
+                            <h2 style="color: #ffaa00;">MANIC <span class="highlight" style="color: #ff0055;">MINER</span></h2>
+                            <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.0.0</span>
+                        </div>
+                        <p class="subtitle">Guide Miner Willy through Cyber Caverns ⛏️</p>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="controls-guide" style="grid-template-columns: 1fr; text-align: center;">
+                            <div class="control-box">
+                                <span class="box-title">CONTROLS & OBJECTIVES</span>
+                                <div class="key-combo"><kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> or <kbd>Left Stick</kbd> : Walk Left/Right</div>
+                                <div class="key-combo"><kbd>SPACE</kbd> or <kbd>W</kbd> or <kbd>↑</kbd> or <kbd>Button A</kbd> : Jump</div>
+                                <div class="key-combo" style="margin-top: 0.5rem; color: #ffaa00;">Collect all 🗝️ Energy Crystals in each cavern to unlock the 🌀 Portal Exit before your AIR supply runs out!</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button id="btnStartGame" class="btn-primary glow-btn" style="background: linear-gradient(135deg, #ffaa00, #ff0055);">EXPLORE CAVERNS</button>
+                        <a href="index.html" class="btn-secondary text-center">ARCADE HUB</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: Pause Screen -->
+            <div id="pauseModal" class="modal-overlay">
+                <div class="modal-card glass-panel sm">
+                    <h2>GAME PAUSED</h2>
+                    <p>Press <kbd>P</kbd> or <kbd>ESC</kbd></p>
+                    <div class="modal-actions">
+                        <button id="btnResume" class="btn-primary">RESUME</button>
+                        <a href="index.html" class="btn-secondary">ARCADE HUB</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: Game Over Screen -->
+            <div id="gameOverModal" class="modal-overlay">
+                <div class="modal-card glass-panel glow-border">
+                    <div class="winner-trophy" id="trophyIcon">⛏️</div>
+                    <h2 id="winnerText">MINER WILLY DEFEATED</h2>
+                    <div class="final-score" id="finalScoreText">SCORE: 0</div>
+                    <div class="stats-summary" id="statsSummary"></div>
+                    <div class="modal-actions">
+                        <button id="btnPlayAgain" class="btn-primary glow-btn" style="background: linear-gradient(135deg, #ffaa00, #ff0055);">PLAY AGAIN</button>
+                        <a href="index.html" class="btn-secondary">ARCADE HUB</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Game Engine Scripts -->
+    <script src="js/sound.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/miner/miner_levels.js"></script>
+    <script src="js/miner/miner_engine.js"></script>
+    <script src="js/miner/miner_main.js"></script>
+</body>
+</html>
