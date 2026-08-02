@@ -25,14 +25,9 @@ class Ball {
         this.lastHitter = null;
         this.heldBy = null;
         this.holdTimer = 0;
-        this.portalCooldown = 0;
     }
 
     update(dt, particleSystem) {
-        if (this.portalCooldown > 0) {
-            this.portalCooldown -= dt;
-        }
-
         if (this.heldBy) {
             this.x = this.heldBy.id === 'p1' ? this.heldBy.x + this.heldBy.width + 12 : this.heldBy.x - 12;
             this.y = this.heldBy.y + this.heldBy.height / 2;
@@ -136,7 +131,6 @@ class Paddle {
         ctx.shadowBlur = 18;
 
         if (this.isSplit) {
-            // Split Paddle Render
             ctx.beginPath();
             ctx.roundRect(this.x, this.y, this.width, this.height * 0.45, 6);
             ctx.roundRect(this.x, this.y + this.height * 0.55, this.width, this.height * 0.45, 6);
@@ -153,38 +147,6 @@ class Paddle {
             ctx.fillRect(this.id === 'p1' ? this.x + this.width : this.x - 4, this.y + this.height - 14, 4, 10);
         }
 
-        ctx.restore();
-    }
-}
-
-class PortalPair {
-    constructor(x1, y1, x2, y2) {
-        this.p1 = { x: x1, y: y1, radius: 22, color: '#00f3ff' };
-        this.p2 = { x: x2, y: y2, radius: 22, color: '#ffaa00' };
-        this.angle = 0;
-    }
-
-    update(dt) {
-        this.angle += 2 * dt;
-    }
-
-    draw(ctx) {
-        ctx.save();
-        [this.p1, this.p2].forEach(p => {
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 16;
-            ctx.strokeStyle = p.color;
-            ctx.lineWidth = 3;
-
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.font = '14px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🌀', p.x, p.y);
-        });
         ctx.restore();
     }
 }
@@ -299,8 +261,8 @@ class GameEngine {
         this.width = canvas.width;
         this.height = canvas.height;
 
-        this.mode = '1p'; // '1p', '2p', 'boss'
-        this.bossStage = 1; // 1: Mothership, 2: Glitch Overlord, 3: Twin Cores
+        this.mode = '1p';
+        this.bossStage = 1;
         this.bossHealth = 5;
         this.maxBossHealth = 5;
 
@@ -313,7 +275,6 @@ class GameEngine {
         this.balls = [];
         this.powerUps = [];
         this.lasers = [];
-        this.portals = null;
         this.bumpers = [];
 
         this.ai = new AIController(this.aiDiff);
@@ -354,8 +315,7 @@ class GameEngine {
         this.powerUpSpawnTimer = 4;
         this.bulletTimeTimer = 0;
 
-        // Init Portals & Bumpers
-        this.portals = new PortalPair(this.width * 0.35, 120, this.width * 0.65, this.height - 120);
+        // Init Pinball Bumpers
         this.bumpers = [
             new PinballBumper(this.width / 2, this.height * 0.3),
             new PinballBumper(this.width / 2, this.height * 0.7)
@@ -383,24 +343,22 @@ class GameEngine {
         this.particles.triggerShake(18, 0.4);
 
         const opponent = paddle.id === 'p1' ? this.p2 : this.p1;
-        opponent.stunTimer = 1.5; // EMP Stun
+        opponent.stunTimer = 1.5;
         paddle.isSplit = true;
         paddle.splitTimer = 6.0;
 
-        this.bulletTimeTimer = 3.0; // Trigger Bullet Time
+        this.bulletTimeTimer = 3.0;
     }
 
     update(dt) {
         if (this.state !== 'PLAYING') return;
 
-        // Bullet Time scale math
         let effectiveDt = dt;
         if (this.bulletTimeTimer > 0) {
             this.bulletTimeTimer -= dt;
             effectiveDt = dt * 0.35;
         }
 
-        // BGM speed scaling based on ball velocity
         if (this.balls.length > 0) {
             const ballSpeed = Math.hypot(this.balls[0].vx, this.balls[0].vy);
             this.sound.setBgmSpeed(ballSpeed / 400);
@@ -408,7 +366,6 @@ class GameEngine {
 
         this.p1.update(dt);
         this.p2.update(dt);
-        if (this.portals) this.portals.update(dt);
         this.bumpers.forEach(b => b.update(dt));
 
         if (this.mode === '1p' || this.mode === 'boss') {
@@ -497,26 +454,6 @@ class GameEngine {
                 ball.vy *= -1;
                 this.sound.playBounce(false);
                 this.particles.addSparks(ball.x, ball.y, '#00f3ff', 6);
-            }
-
-            // Portal Warps
-            if (this.portals && ball.portalCooldown <= 0) {
-                const d1 = Math.hypot(ball.x - this.portals.p1.x, ball.y - this.portals.p1.y);
-                const d2 = Math.hypot(ball.x - this.portals.p2.x, ball.y - this.portals.p2.y);
-
-                if (d1 < ball.radius + this.portals.p1.radius) {
-                    ball.x = this.portals.p2.x;
-                    ball.y = this.portals.p2.y;
-                    ball.portalCooldown = 1.0;
-                    this.sound.playWarp();
-                    this.particles.addPowerupBurst(ball.x, ball.y, '#00f3ff');
-                } else if (d2 < ball.radius + this.portals.p2.radius) {
-                    ball.x = this.portals.p1.x;
-                    ball.y = this.portals.p1.y;
-                    ball.portalCooldown = 1.0;
-                    this.sound.playWarp();
-                    this.particles.addPowerupBurst(ball.x, ball.y, '#ffaa00');
-                }
             }
 
             // Pinball Bumpers
@@ -689,7 +626,6 @@ class GameEngine {
         this.balls.splice(ballIndex, 1);
         this.stats.currentRally = 0;
 
-        // Check Match / Boss Victory
         if ((this.mode !== 'boss' && scorer.score >= this.targetScore) || (this.mode === 'boss' && (this.bossHealth <= 0 || this.p2.score >= 5))) {
             this.state = 'GAMEOVER';
             this.sound.playVictory();
@@ -711,7 +647,6 @@ class GameEngine {
 
         this.particles.drawBackgroundGrid(this.ctx, this.width, this.height);
 
-        if (this.portals) this.portals.draw(this.ctx);
         this.bumpers.forEach(b => b.draw(this.ctx));
 
         if (this.p1.hasShield) this.drawShieldWall(12, '#00ff66');
