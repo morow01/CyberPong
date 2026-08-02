@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v2.0: Neon Evolution - Design Tokens & Stylesheet
+   CyberPong v2.2: Neon Evolution - Design Tokens & Stylesheet
    ========================================================================== */
 
 :root {
@@ -422,7 +422,7 @@ input[type="range"] {
     border-radius: 24px;
     padding: 1.85rem;
     width: 92%;
-    max-width: 560px;
+    max-width: 580px;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -455,10 +455,10 @@ input[type="range"] {
     margin-bottom: 0.5rem;
 }
 
-.mode-grid-3 {
+.mode-grid-4 {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.75rem;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 0.5rem;
     margin-bottom: 0.85rem;
 }
 
@@ -466,7 +466,7 @@ input[type="range"] {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 0.85rem 0.6rem;
+    padding: 0.75rem 0.4rem;
     cursor: pointer;
     text-align: center;
     transition: all 0.2s ease;
@@ -485,9 +485,21 @@ input[type="range"] {
     box-shadow: 0 0 16px rgba(0, 243, 255, 0.3);
 }
 
-.mode-icon { font-size: 1.6rem; margin-bottom: 0.3rem; }
-.mode-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.85rem; }
-.mode-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; }
+.mode-card.special-mode.active {
+    background: rgba(255, 0, 85, 0.18);
+    border-color: var(--neon-magenta);
+    box-shadow: 0 0 16px rgba(255, 0, 85, 0.4);
+}
+
+.mode-card.demo-mode.active {
+    background: rgba(168, 85, 247, 0.18);
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+}
+
+.mode-icon { font-size: 1.5rem; margin-bottom: 0.2rem; }
+.mode-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.75rem; }
+.mode-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; }
 
 /* Setting Groups */
 .setting-group { margin-bottom: 0.75rem; }
@@ -525,6 +537,13 @@ input[type="range"] {
     border-color: var(--neon-cyan);
     font-weight: 700;
     box-shadow: 0 0 12px var(--neon-cyan);
+}
+
+.btn-toggle.active {
+    background: var(--neon-green);
+    color: var(--text-dark);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 12px var(--neon-green);
 }
 
 /* Controls Guide Box */

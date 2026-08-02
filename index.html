@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberPong v2.1: Neon Evolution</title>
-    <meta name="description" content="A modern cyberpunk action Pong game featuring 1P vs AI, 2P local multiplayer, Dual Gamepad Controller support, Boss Fights, Ultimate Abilities, and Melodic Synthwave BGM.">
+    <title>CyberPong v2.2: Neon Evolution</title>
+    <meta name="description" content="A modern cyberpunk action Pong game featuring 1P vs AI, 2P local multiplayer, AI vs AI Demo mode, Dual Gamepad Controller support, Boss Fights, Ultimate Abilities, and Aim Assist.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +36,7 @@
             <div class="hud-center">
                 <div class="title-row">
                     <h1 class="game-logo">CYBER<span class="highlight">PONG</span></h1>
-                    <span class="version-badge">v2.1.0</span>
+                    <span class="version-badge">v2.2.0</span>
                 </div>
                 <div class="match-info" id="matchInfo">FIRST TO 7 WINS</div>
                 
@@ -96,15 +96,15 @@
                     <div class="modal-header">
                         <div class="header-title-wrap">
                             <h2>CYBER<span class="highlight">PONG</span> EVOLUTION</h2>
-                            <span class="version-badge">v2.1.0</span>
+                            <span class="version-badge">v2.2.0</span>
                         </div>
-                        <p class="subtitle">Supports Keyboard, Mouse & Dual Gamepads 🎮</p>
+                        <p class="subtitle">Keyboard, Mouse, Dual Gamepads & AI Demo Mode 🎮</p>
                     </div>
 
                     <div class="modal-body">
                         <!-- Mode Selector -->
                         <div class="section-title">CHOOSE GAME MODE</div>
-                        <div class="mode-grid mode-grid-3">
+                        <div class="mode-grid mode-grid-4">
                             <button id="btnMode1P" class="mode-card active">
                                 <div class="mode-icon">🤖</div>
                                 <div class="mode-title">1 PLAYER</div>
@@ -120,6 +120,11 @@
                                 <div class="mode-title">BOSS FIGHT</div>
                                 <div class="mode-desc">3 Boss Stages</div>
                             </button>
+                            <button id="btnModeDemo" class="mode-card demo-mode">
+                                <div class="mode-icon">📺</div>
+                                <div class="mode-title">AI DEMO</div>
+                                <div class="mode-desc">AI vs AI Watch</div>
+                            </button>
                         </div>
 
                         <!-- AI Difficulty Selection (Only visible in 1P) -->
@@ -132,13 +137,14 @@
                             </div>
                         </div>
 
-                        <!-- Visual Theme Selector -->
+                        <!-- Visual Theme & Trajectory Assist Selector -->
                         <div class="setting-group">
-                            <label class="setting-label">VISUAL THEME</label>
+                            <label class="setting-label">VISUAL THEME & ASSIST</label>
                             <div class="button-group">
                                 <button class="btn-select btn-theme active" data-theme="cyber">CYBER NEON</button>
                                 <button class="btn-select btn-theme" data-theme="synthwave">SYNTHWAVE 80s</button>
                                 <button class="btn-select btn-theme" data-theme="matrix">MATRIX CODE</button>
+                                <button id="btnAimAssistToggle" class="btn-select btn-toggle" title="Toggle Trajectory Aim Assist Line">🎯 AIM: OFF</button>
                             </div>
                         </div>
 
@@ -198,7 +204,7 @@
             <div id="gameOverModal" class="modal-overlay">
                 <div class="modal-card glass-panel glow-border">
                     <div class="winner-trophy" id="trophyIcon">🏆</div>
-                    <h2 id="winnerText">PLAYER 1 VICTORIOUS!</h2>
+                    <h2 id="winnerText">MATCH COMPLETE</h2>
                     <div class="final-score" id="finalScoreText">7 - 4</div>
                     <div class="stats-summary" id="statsSummary">
                         <!-- Match stats rendered dynamically -->

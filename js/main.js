@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v2.0 Application Entrypoint & Dual Gamepad Controller
+   CyberPong v2.2 Application Entrypoint & UI Controller
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Audio & Theme Controls
     const btnSoundToggle = document.getElementById('btnSoundToggle');
     const btnBgmToggle = document.getElementById('btnBgmToggle');
+    const btnAimAssistToggle = document.getElementById('btnAimAssistToggle');
     const volumeSlider = document.getElementById('volumeSlider');
     const themeButtons = document.querySelectorAll('.btn-theme');
 
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnMode1P = document.getElementById('btnMode1P');
     const btnMode2P = document.getElementById('btnMode2P');
     const btnModeBoss = document.getElementById('btnModeBoss');
+    const btnModeDemo = document.getElementById('btnModeDemo');
     const aiDifficultyGroup = document.getElementById('aiDifficultyGroup');
     const targetScoreGroup = document.getElementById('targetScoreGroup');
     const diffButtons = document.querySelectorAll('.btn-diff');
@@ -54,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game Engine & FX
     const particles = new ParticleSystem();
     const game = new GameEngine(canvas, window.sound, particles);
+
+    // Register immediate Game Over callback
+    game.onGameOverCallback = showGameOverModal;
 
     // Settings State
     let selectedMode = '1p';
@@ -74,9 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnMode1P.classList.add('active');
         btnMode2P.classList.remove('active');
         btnModeBoss.classList.remove('active');
+        btnModeDemo.classList.remove('active');
         aiDifficultyGroup.style.display = 'block';
         targetScoreGroup.style.display = 'block';
         bossBarWrapper.style.display = 'none';
+        p1NameEl.textContent = 'PLAYER 1';
         p2NameEl.textContent = 'CYBER AI';
     });
 
@@ -85,9 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnMode2P.classList.add('active');
         btnMode1P.classList.remove('active');
         btnModeBoss.classList.remove('active');
+        btnModeDemo.classList.remove('active');
         aiDifficultyGroup.style.display = 'none';
         targetScoreGroup.style.display = 'block';
         bossBarWrapper.style.display = 'none';
+        p1NameEl.textContent = 'PLAYER 1';
         p2NameEl.textContent = 'PLAYER 2';
     });
 
@@ -96,10 +105,25 @@ document.addEventListener('DOMContentLoaded', () => {
         btnModeBoss.classList.add('active');
         btnMode1P.classList.remove('active');
         btnMode2P.classList.remove('active');
+        btnModeDemo.classList.remove('active');
         aiDifficultyGroup.style.display = 'none';
         targetScoreGroup.style.display = 'none';
         bossBarWrapper.style.display = 'flex';
+        p1NameEl.textContent = 'PLAYER 1';
         p2NameEl.textContent = 'MOTHERSHIP CORE';
+    });
+
+    btnModeDemo.addEventListener('click', () => {
+        selectedMode = 'demo';
+        btnModeDemo.classList.add('active');
+        btnMode1P.classList.remove('active');
+        btnMode2P.classList.remove('active');
+        btnModeBoss.classList.remove('active');
+        aiDifficultyGroup.style.display = 'none';
+        targetScoreGroup.style.display = 'block';
+        bossBarWrapper.style.display = 'none';
+        p1NameEl.textContent = 'CYBER AI 1';
+        p2NameEl.textContent = 'CYBER AI 2';
     });
 
     // Theme Switcher
@@ -115,6 +139,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             particles.setTheme(selectedTheme);
         });
+    });
+
+    // Aim Assist Toggle
+    btnAimAssistToggle.addEventListener('click', () => {
+        game.showAimAssist = !game.showAimAssist;
+        if (game.showAimAssist) {
+            btnAimAssistToggle.classList.add('active');
+            btnAimAssistToggle.textContent = '🎯 AIM: ON';
+        } else {
+            btnAimAssistToggle.classList.remove('active');
+            btnAimAssistToggle.textContent = '🎯 AIM: OFF';
+        }
     });
 
     // Difficulty Selector
@@ -146,6 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
             p2NameEl.textContent = `MOTHERSHIP CORE`;
             bossBarWrapper.style.display = 'flex';
             game.startMatch('boss', 'boss_mothership', 5, 1);
+        } else if (selectedMode === 'demo') {
+            matchInfoEl.textContent = `AI VS AI DEMO MATCH`;
+            bossBarWrapper.style.display = 'none';
+            game.startMatch('demo', 'medium', selectedScore);
         } else {
             bossBarWrapper.style.display = 'none';
             matchInfoEl.textContent = `FIRST TO ${selectedScore} WINS`;
@@ -216,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         keys[e.code] = false;
     });
 
-    // Gamepad Connection Event Listeners
+    // Gamepad Event Listeners
     window.addEventListener('gamepadconnected', (e) => {
         window.sound.init();
         updateGamepadStatusBadges();
@@ -248,32 +288,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Process Input (Keyboard & Dual Gamepad Poller)
+    // Process Input
     function processInput(dt) {
         if (game.state !== 'PLAYING') return;
 
         const moveSpeed = 500;
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
 
-        // --- PLAYER 1 (Keyboard & Gamepad 0) --- //
-        if (!game.p1.isFrozen && game.p1.stunTimer <= 0) {
+        // Player 1 controls (skipped in demo mode)
+        if (game.mode !== 'demo' && !game.p1.isFrozen && game.p1.stunTimer <= 0) {
             let p1Move = 0;
             if (keys['KeyW']) p1Move -= 1;
             if (keys['KeyS']) p1Move += 1;
 
-            // Gamepad 0 Input for P1
             if (gamepads[0]) {
                 const gp = gamepads[0];
-                const axisY = gp.axes[1]; // Left Stick Y-axis
+                const axisY = gp.axes[1];
                 if (Math.abs(axisY) > 0.15) p1Move += axisY;
-                if (gp.buttons[12] && gp.buttons[12].pressed) p1Move -= 1; // D-Pad Up
-                if (gp.buttons[13] && gp.buttons[13].pressed) p1Move += 1; // D-Pad Down
+                if (gp.buttons[12] && gp.buttons[12].pressed) p1Move -= 1;
+                if (gp.buttons[13] && gp.buttons[13].pressed) p1Move += 1;
 
-                // Laser Shot (Button A / Cross - button 0, or Right Trigger - button 7)
                 if ((gp.buttons[0] && gp.buttons[0].pressed) || (gp.buttons[7] && gp.buttons[7].pressed)) {
                     game.p1.shootLaser = true;
                 }
-                // Ultimate (Button Y / Triangle - button 3, or Left Trigger - button 6)
                 if ((gp.buttons[3] && gp.buttons[3].pressed) || (gp.buttons[2] && gp.buttons[2].pressed) || (gp.buttons[6] && gp.buttons[6].pressed)) {
                     game.triggerUltimate(game.p1);
                 }
@@ -283,18 +320,19 @@ document.addEventListener('DOMContentLoaded', () => {
             game.p1.y += p1Move * moveSpeed * speedMult * dt;
         }
 
-        if (keys['Space'] || keys['KeyD']) game.p1.shootLaser = true;
-        if (keys['KeyQ'] || keys['KeyE']) game.triggerUltimate(game.p1);
-        game.p1.y = Math.max(10, Math.min(game.height - game.p1.height - 10, game.p1.y));
+        if (game.mode !== 'demo') {
+            if (keys['Space'] || keys['KeyD']) game.p1.shootLaser = true;
+            if (keys['KeyQ'] || keys['KeyE']) game.triggerUltimate(game.p1);
+            game.p1.y = Math.max(10, Math.min(game.height - game.p1.height - 10, game.p1.y));
+        }
 
-        // --- PLAYER 2 (Keyboard & Gamepad 1) --- //
+        // Player 2 controls in 2P mode
         if (game.mode === '2p') {
             if (!game.p2.isFrozen && game.p2.stunTimer <= 0) {
                 let p2Move = 0;
                 if (keys['ArrowUp']) p2Move -= 1;
                 if (keys['ArrowDown']) p2Move += 1;
 
-                // Gamepad 1 Input for P2
                 if (gamepads[1]) {
                     const gp = gamepads[1];
                     const axisY = gp.axes[1];
@@ -320,6 +358,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Show Game Over Modal (Fixed for defeat & victory)
+    function showGameOverModal() {
+        let winner = 'PLAYER 1';
+        let winnerColor = '#00f3ff';
+
+        if (game.mode === 'boss') {
+            if (game.bossHealth <= 0) {
+                winner = 'PLAYER 1 VICTORIOUS!';
+                winnerColor = '#00f3ff';
+            } else {
+                winner = 'CYBER BOSS VICTORIOUS!';
+                winnerColor = '#ff0055';
+            }
+        } else if (game.mode === 'demo') {
+            winner = game.p1.score >= game.targetScore ? 'CYBER AI 1 VICTORIOUS!' : 'CYBER AI 2 VICTORIOUS!';
+            winnerColor = game.p1.score >= game.targetScore ? '#00f3ff' : '#ff0055';
+        } else if (game.mode === '1p') {
+            if (game.p1.score >= game.targetScore) {
+                winner = 'PLAYER 1 VICTORIOUS!';
+                winnerColor = '#00f3ff';
+            } else {
+                winner = 'CYBER AI VICTORIOUS!';
+                winnerColor = '#ff0055';
+            }
+        } else {
+            winner = game.p1.score >= game.targetScore ? 'PLAYER 1 VICTORIOUS!' : 'PLAYER 2 VICTORIOUS!';
+            winnerColor = game.p1.score >= game.targetScore ? '#00f3ff' : '#ff0055';
+        }
+
+        const winnerText = document.getElementById('winnerText');
+        const finalScoreText = document.getElementById('finalScoreText');
+        const statsSummary = document.getElementById('statsSummary');
+
+        winnerText.textContent = winner;
+        winnerText.style.color = winnerColor;
+        finalScoreText.textContent = `${game.p1.score} - ${game.p2.score}`;
+
+        statsSummary.innerHTML = `
+            <div>🔥 Max Rally: <strong>${game.stats.maxRally}</strong></div>
+            <div>⚡ Upgrades Claimed: <strong>${game.stats.powerUpsCollected}</strong></div>
+        `;
+
+        gameOverModal.classList.add('active');
+    }
+
     // HUD Update Loop
     function updateHUD() {
         p1ScoreEl.textContent = game.p1.score;
@@ -338,24 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPowerupBadges(game.p1, p1PowerupsEl);
         renderPowerupBadges(game.p2, p2PowerupsEl);
         updateGamepadStatusBadges();
-
-        if (game.state === 'GAMEOVER' && !gameOverModal.classList.contains('active')) {
-            const winner = game.p1.score >= game.targetScore || (game.mode === 'boss' && game.bossHealth <= 0) ? 'PLAYER 1' : (game.mode === 'boss' ? 'CYBER BOSS' : (game.mode === '1p' ? 'CYBER AI' : 'PLAYER 2'));
-            const winnerText = document.getElementById('winnerText');
-            const finalScoreText = document.getElementById('finalScoreText');
-            const statsSummary = document.getElementById('statsSummary');
-
-            winnerText.textContent = `${winner} VICTORIOUS!`;
-            winnerText.style.color = game.p1.score >= game.targetScore || (game.mode === 'boss' && game.bossHealth <= 0) ? '#00f3ff' : '#ff0055';
-            finalScoreText.textContent = `${game.p1.score} - ${game.p2.score}`;
-
-            statsSummary.innerHTML = `
-                <div>🔥 Max Rally: <strong>${game.stats.maxRally}</strong></div>
-                <div>⚡ Upgrades Claimed: <strong>${game.stats.powerUpsCollected}</strong></div>
-            `;
-
-            gameOverModal.classList.add('active');
-        }
     }
 
     function renderPowerupBadges(paddle, container) {
@@ -363,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (paddle.hasShield) html += `<div class="badge-powerup" title="Shield Barrier">🛡️</div>`;
         if (paddle.hasMagnet) html += `<div class="badge-powerup" title="Magnetic Field">🧲</div>`;
         if (paddle.isFrozen) html += `<div class="badge-powerup" title="Frozen">❄️</div>`;
+        if (paddle.hasSight) html += `<div class="badge-powerup" title="Cyber Sight">👁️</div>`;
         if (paddle.sizeBoostTimer > 0) html += `<div class="badge-powerup" title="Titan Size">📏</div>`;
         if (paddle.laserAmmo > 0) html += `<div class="badge-powerup" title="Laser Ammo (${paddle.laserAmmo})">🔫${paddle.laserAmmo}</div>`;
         if (paddle.isSplit) html += `<div class="badge-powerup" title="Splitter Paddle">🪓</div>`;
