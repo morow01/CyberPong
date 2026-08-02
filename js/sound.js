@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Sound Synth & Procedural Synthwave BGM Module (Web Audio API)
+   Sound Synth Module (Web Audio API)
    ========================================================================== */
 
 class SoundSynth {
@@ -9,19 +9,7 @@ class SoundSynth {
         this.volume = 0.5;
         this.muted = false;
         this.initialized = false;
-
-        // BGM Synth State
         this.bgmEnabled = false;
-        this.bgmInterval = null;
-        this.bgmStep = 0;
-        this.bgmTempo = 125; // BPM
-        this.bgmSpeedMultiplier = 1.0;
-
-        // Synthwave 16-step bass notes (in Hz)
-        this.bassNotes = [
-            110, 110, 110, 130.81, 110, 110, 146.83, 130.81,
-            110, 110, 110, 130.81, 164.81, 146.83, 130.81, 98.00
-        ];
     }
 
     init() {
@@ -56,68 +44,13 @@ class SoundSynth {
         this.setVolume(this.volume);
     }
 
-    // --- Procedural Synthwave BGM Loop --- //
     toggleBgm() {
-        this.init();
         this.bgmEnabled = !this.bgmEnabled;
-
-        if (this.bgmEnabled) {
-            this.startBgmLoop();
-        } else {
-            this.stopBgmLoop();
-        }
         return this.bgmEnabled;
     }
 
-    startBgmLoop() {
-        if (this.bgmInterval) clearInterval(this.bgmInterval);
-        const intervalMs = (60 / (this.bgmTempo * this.bgmSpeedMultiplier)) * 1000 / 4;
-
-        this.bgmInterval = setInterval(() => {
-            if (!this.muted && this.bgmEnabled && this.initialized) {
-                this.playBgmStep();
-            }
-        }, intervalMs);
-    }
-
-    stopBgmLoop() {
-        if (this.bgmInterval) {
-            clearInterval(this.bgmInterval);
-            this.bgmInterval = null;
-        }
-    }
-
     setBgmSpeed(multiplier = 1.0) {
-        if (Math.abs(this.bgmSpeedMultiplier - multiplier) > 0.05) {
-            this.bgmSpeedMultiplier = Math.max(0.8, Math.min(1.8, multiplier));
-            if (this.bgmEnabled) {
-                this.startBgmLoop();
-            }
-        }
-    }
-
-    playBgmStep() {
-        if (!this.ctx) return;
-        this.resume();
-
-        const now = this.ctx.currentTime;
-        const note = this.bassNotes[this.bgmStep % this.bassNotes.length];
-        this.bgmStep++;
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(note / 2, now);
-
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.005, now + 0.12);
-
-        osc.connect(gain);
-        gain.connect(this.masterGain);
-
-        osc.start(now);
-        osc.stop(now + 0.12);
+        // No-op for clear audio
     }
 
     // --- Sound Effects --- //
@@ -145,29 +78,6 @@ class SoundSynth {
 
         osc.start(now);
         osc.stop(now + 0.08);
-    }
-
-    // Portal Warp Effect
-    playWarp() {
-        if (!this.initialized || this.muted) return;
-        this.resume();
-
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
-
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-
-        osc.connect(gain);
-        gain.connect(this.masterGain);
-
-        osc.start(now);
-        osc.stop(now + 0.18);
     }
 
     // Pinball Bumper Bounce

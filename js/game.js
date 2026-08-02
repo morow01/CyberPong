@@ -9,7 +9,8 @@ const POWERUP_TYPES = {
     FROST: { id: 'FROST', icon: '❄️', name: 'Frost Stasis', color: '#3b82f6' },
     MULTIBALL: { id: 'MULTIBALL', icon: '💥', name: 'Multi-Ball', color: '#ff0055' },
     SIZE: { id: 'SIZE', icon: '📏', name: 'Titan Size', color: '#ffaa00' },
-    LASER: { id: 'LASER', icon: '🔫', name: 'Plasma Blaster', color: '#ff3300' }
+    LASER: { id: 'LASER', icon: '🔫', name: 'Plasma Blaster', color: '#ff3300' },
+    SIGHT: { id: 'SIGHT', icon: '👁️', name: 'Cyber Sight', color: '#00f3ff' }
 };
 
 class Ball {
@@ -17,7 +18,7 @@ class Ball {
         this.x = x;
         this.y = y;
         this.radius = 8;
-        this.baseSpeed = 300; // Gentler initial serve
+        this.baseSpeed = 300;
         this.speed = this.baseSpeed;
         this.vx = vx;
         this.vy = vy;
@@ -77,7 +78,7 @@ class Paddle {
         this.x = x;
         this.y = y;
         this.width = 14;
-        this.baseHeight = 115; // Wider for easier family play!
+        this.baseHeight = 115;
         this.height = this.baseHeight;
         this.score = 0;
         this.color = id === 'p1' ? '#00f3ff' : '#ff0055';
@@ -94,6 +95,8 @@ class Paddle {
         this.shootLaser = false;
         this.isSplit = false;
         this.splitTimer = 0;
+        this.hasSight = false;
+        this.sightTimer = 0;
     }
 
     addUlt(amount) {
@@ -109,6 +112,11 @@ class Paddle {
         if (this.sizeBoostTimer > 0) {
             this.sizeBoostTimer -= dt;
             if (this.sizeBoostTimer <= 0) this.height = this.baseHeight;
+        }
+
+        if (this.sightTimer > 0) {
+            this.sightTimer -= dt;
+            if (this.sightTimer <= 0) this.hasSight = false;
         }
 
         if (this.stunTimer > 0) {
@@ -357,11 +365,6 @@ class GameEngine {
             effectiveDt = dt * 0.35;
         }
 
-        if (this.balls.length > 0) {
-            const ballSpeed = Math.hypot(this.balls[0].vx, this.balls[0].vy);
-            this.sound.setBgmSpeed(ballSpeed / 300);
-        }
-
         this.p1.update(dt);
         this.p2.update(dt);
         this.bumpers.forEach(b => b.update(dt));
@@ -545,7 +548,7 @@ class GameEngine {
 
         const relativeIntersectY = (paddle.y + paddle.height / 2) - ball.y;
         const normalizedIntersectY = relativeIntersectY / (paddle.height / 2);
-        const bounceAngle = normalizedIntersectY * (Math.PI / 3.5); // Slightly gentler angle
+        const bounceAngle = normalizedIntersectY * (Math.PI / 3.5);
 
         const currentSpeed = Math.hypot(ball.vx, ball.vy);
         const newSpeed = Math.min(750, currentSpeed * 1.03);
@@ -574,6 +577,11 @@ class GameEngine {
         const opponent = paddle.id === 'p1' ? this.p2 : this.p1;
 
         switch (type.id) {
+            case 'SIGHT':
+                paddle.hasSight = true;
+                paddle.sightTimer = 8.0;
+                this.particles.addFloatingText(this.width / 2, 100, "CYBER SIGHT ACTIVE!", "#00f3ff");
+                break;
             case 'SPEED':
                 this.balls.forEach(b => { b.vx *= 1.35; b.vy *= 1.35; });
                 break;
@@ -643,9 +651,14 @@ class GameEngine {
 
         this.particles.drawBackgroundGrid(this.ctx, this.width, this.height);
 
-        // Draw Trajectory Guide Line for Player 1
-        if (this.balls.length > 0 && this.balls[0].vx < 0) {
-            this.drawTrajectoryGuide(this.ctx, this.balls[0], this.p1);
+        // Trajectory Guide ONLY renders when player has active Cyber Sight Power-Up!
+        if (this.balls.length > 0) {
+            const b = this.balls[0];
+            if (b.vx < 0 && this.p1.hasSight) {
+                this.drawTrajectoryGuide(this.ctx, b, this.p1);
+            } else if (b.vx > 0 && this.p2.hasSight) {
+                this.drawTrajectoryGuide(this.ctx, b, this.p2);
+            }
         }
 
         this.bumpers.forEach(b => b.draw(this.ctx));
@@ -667,8 +680,8 @@ class GameEngine {
 
     drawTrajectoryGuide(ctx, ball, paddle) {
         ctx.save();
-        ctx.strokeStyle = 'rgba(0, 243, 255, 0.35)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.6)';
+        ctx.lineWidth = 2.5;
         ctx.setLineDash([6, 6]);
 
         let tx = ball.x;
