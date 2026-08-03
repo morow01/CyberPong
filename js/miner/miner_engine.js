@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Manic Miner: Cyber Edition - Platformer Physics & Logic Engine (v3.0.3)
+   Manic Miner: Cyber Edition - Health Energy System & Engine (v3.1.0)
    ========================================================================== */
 
 class MinerWilly {
@@ -18,6 +18,8 @@ class MinerWilly {
         this.facing = 'right';
         this.lives = 3;
         this.score = 0;
+        this.health = 100;
+        this.maxHealth = 100;
         this.invulnerableTimer = 0;
     }
 
@@ -28,7 +30,7 @@ class MinerWilly {
         this.vy = 0;
         this.isGrounded = false;
         this.hasDoubleJumped = false;
-        this.invulnerableTimer = 1.5; // 1.5s invincibility on respawn
+        this.invulnerableTimer = 1.0;
     }
 }
 
@@ -61,6 +63,7 @@ class MinerEngine {
         if (levelIdx === 0) {
             this.willy.lives = 3;
             this.willy.score = 0;
+            this.willy.health = 100;
         }
         this.willy.resetPos(this.level.startPos);
         this.airSupply = this.level.airLimit;
@@ -76,7 +79,6 @@ class MinerEngine {
     update(dt, input) {
         if (this.state !== 'PLAYING') return;
 
-        // Invulnerability Timer Decay
         if (this.willy.invulnerableTimer > 0) {
             this.willy.invulnerableTimer -= dt;
         }
@@ -165,7 +167,7 @@ class MinerEngine {
             }
         }
 
-        // Enemy Patrol & Collision Check (Protected by Invulnerability)
+        // Enemy Collision (Reduces Energy / Health instead of Instant Death!)
         for (const e of this.level.enemies) {
             e.x += e.speed * dt;
             if (e.x <= e.minX || e.x >= e.maxX) {
@@ -173,7 +175,7 @@ class MinerEngine {
             }
 
             if (this.willy.invulnerableTimer <= 0 && this.checkAABB(this.willy, e)) {
-                this.handlePlayerDeath("MUTANT COLLISION!");
+                this.handleEnemyDamage(25, "ENERGY DRAINED!");
                 return;
             }
         }
@@ -190,6 +192,42 @@ class MinerEngine {
         }
 
         if (this.particles) this.particles.update(dt);
+    }
+
+    handleEnemyDamage(amount, msg) {
+        if (this.willy.invulnerableTimer > 0) return;
+
+        this.willy.health = Math.max(0, this.willy.health - amount);
+        this.willy.invulnerableTimer = 0.9;
+
+        // Knockback recoil
+        this.willy.vy = -220;
+        this.willy.vx = this.willy.facing === 'right' ? -180 : 180;
+
+        if (this.sound) this.sound.playLaser();
+        if (this.particles) {
+            this.particles.addSparks(this.willy.x + 12, this.willy.y + 17, '#ff0055', 20);
+            this.particles.addFloatingText(this.willy.x, this.willy.y - 15, `-${amount} ENERGY!`, "#ff0055");
+        }
+
+        // Only lose a life when energy hits 0!
+        if (this.willy.health <= 0) {
+            this.handlePlayerDeath(msg);
+        }
+    }
+
+    handlePlayerDeath(reason) {
+        this.willy.lives--;
+        if (this.sound) this.sound.playLaser();
+
+        if (this.willy.lives <= 0) {
+            this.state = 'GAMEOVER';
+        } else {
+            this.willy.health = 100; // Reset full energy on respawn
+            this.willy.resetPos(this.level.startPos);
+            this.airSupply = this.level.airLimit;
+            if (this.particles) this.particles.addFloatingText(this.width / 2, 100, reason, "#ff0055");
+        }
     }
 
     resolveHorizontalCollisions() {
@@ -245,25 +283,10 @@ class MinerEngine {
         );
     }
 
-    handlePlayerDeath(reason) {
-        if (this.willy.invulnerableTimer > 0) return;
-
-        this.willy.lives--;
-        if (this.sound) this.sound.playLaser();
-        if (this.particles) this.particles.addSparks(this.willy.x + 12, this.willy.y + 17, '#ff0055', 25);
-
-        if (this.willy.lives <= 0) {
-            this.state = 'GAMEOVER';
-        } else {
-            this.willy.resetPos(this.level.startPos);
-            this.airSupply = this.level.airLimit;
-            if (this.particles) this.particles.addFloatingText(this.width / 2, 100, reason, "#ff0055");
-        }
-    }
-
     handleLevelComplete() {
         if (this.sound) this.sound.playVictory();
         this.willy.score += Math.floor(this.airSupply) * 10;
+        this.willy.health = 100; // Restore full health on level pass
 
         if (this.currentLevelIdx + 1 < CAVERN_LEVELS.length) {
             this.loadLevel(this.currentLevelIdx + 1);
@@ -350,12 +373,13 @@ class MinerEngine {
             this.ctx.fillText(e.icon, e.x, e.y + 20);
         }
 
-        // Draw Miner Willy Player (Flashes when invulnerable)
-        const isFlashing = this.willy.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0;
+        // Draw Miner Willy Player (Flashes red when taking damage / invulnerable)
+        const isFlashing = this.willy.invulnerableTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0;
         if (!isFlashing) {
-            this.ctx.shadowColor = '#00f3ff';
+            const bodyColor = this.willy.invulnerableTimer > 0 ? '#ff0055' : '#00f3ff';
+            this.ctx.shadowColor = bodyColor;
             this.ctx.shadowBlur = 18;
-            this.ctx.fillStyle = '#00f3ff';
+            this.ctx.fillStyle = bodyColor;
             this.ctx.beginPath();
             this.ctx.roundRect(this.willy.x, this.willy.y, this.willy.width, this.willy.height, 6);
             this.ctx.fill();

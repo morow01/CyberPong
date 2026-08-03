@@ -3,22 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manic Miner: Cyber Edition v3.0.3</title>
-    <meta name="description" content="A modern remaster of the classic 1983 Spectrum platformer Manic Miner with cyber neon visuals, crumbling tiles, conveyors, and air meters.">
+    <title>Manic Miner: Cyber Edition v3.1.0</title>
+    <meta name="description" content="A modern remaster of the classic 1983 Spectrum platformer Manic Miner with cyber neon visuals, health energy meters, crumbling tiles, conveyors, and air meters.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        .air-meter-wrapper {
+        .meter-row {
+            display: flex;
+            gap: 1.25rem;
+            align-items: center;
+        }
+
+        .meter-wrapper {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            width: 220px;
+            width: 180px;
         }
 
-        .air-track {
+        .meter-track {
             flex: 1;
             height: 10px;
             background: rgba(0, 0, 0, 0.6);
@@ -32,6 +38,14 @@
             height: 100%;
             background: linear-gradient(90deg, #00ff66, #00f3ff);
             box-shadow: 0 0 10px #00ff66;
+            transition: width 0.2s ease;
+        }
+
+        .health-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff0055, #ffaa00);
+            box-shadow: 0 0 10px #ff0055;
             transition: width 0.2s ease;
         }
     </style>
@@ -52,16 +66,28 @@
             <div class="hud-center">
                 <div class="title-row">
                     <h1 class="game-logo" style="color: #ffaa00;">MANIC <span class="highlight" style="color: #ff0055; text-shadow: 0 0 12px #ff0055;">MINER</span></h1>
-                    <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.0.3</span>
+                    <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.1.0</span>
                 </div>
                 <div class="match-info" id="levelName">THE CENTRAL CAVERN</div>
 
-                <div class="air-meter-wrapper" title="Air Supply Oxygen Meter">
-                    <span style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--neon-cyan);">AIR</span>
-                    <div class="air-track">
-                        <div class="air-fill" id="airFill"></div>
+                <div class="meter-row">
+                    <!-- Energy Health Meter -->
+                    <div class="meter-wrapper" title="Willy Shield Energy Meter">
+                        <span style="font-family: var(--font-heading); font-size: 0.65rem; color: #ff0055;">ENERGY</span>
+                        <div class="meter-track" style="border-color: #ff0055;">
+                            <div class="health-fill" id="healthFill"></div>
+                        </div>
+                        <span id="healthText" style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--text-muted);">100%</span>
                     </div>
-                    <span id="airText" style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--text-muted);">120s</span>
+
+                    <!-- Air Supply Meter -->
+                    <div class="meter-wrapper" title="Air Supply Oxygen Meter">
+                        <span style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--neon-cyan);">AIR</span>
+                        <div class="meter-track">
+                            <div class="air-fill" id="airFill"></div>
+                        </div>
+                        <span id="airText" style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--text-muted);">120s</span>
+                    </div>
                 </div>
             </div>
 
@@ -82,6 +108,7 @@
             <!-- On-screen Legend / Guide Bar -->
             <div id="legendBar">
                 <div class="legend-item"><span class="icon">🗝️</span> Collect Crystals</div>
+                <div class="legend-item"><span class="icon">⚡</span> Shield Energy (-25% hit)</div>
                 <div class="legend-item"><span class="icon">🧱</span> Crumbling Block</div>
                 <div class="legend-item"><span class="icon">«««</span> Conveyor Belt</div>
                 <div class="legend-item"><span class="icon">🌀</span> Portal Exit</div>
@@ -94,7 +121,7 @@
                     <div class="modal-header">
                         <div class="header-title-wrap">
                             <h2 style="color: #ffaa00;">MANIC <span class="highlight" style="color: #ff0055;">MINER</span></h2>
-                            <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.0.3</span>
+                            <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.1.0</span>
                         </div>
                         <p class="subtitle">Guide Miner Willy through Cyber Caverns ⛏️</p>
                     </div>
@@ -105,7 +132,7 @@
                                 <span class="box-title">CONTROLS & OBJECTIVES</span>
                                 <div class="key-combo"><kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> or <kbd>Left Stick</kbd> : Walk Left/Right</div>
                                 <div class="key-combo"><kbd>SPACE</kbd> / <kbd>W</kbd> / <kbd>Button A</kbd> : Jump (Press 2x for 🚀 Double Jump)</div>
-                                <div class="key-combo" style="margin-top: 0.5rem; color: #ffaa00;">Collect all 🗝️ Energy Crystals in each cavern to unlock the 🌀 Portal Exit before your AIR supply runs out!</div>
+                                <div class="key-combo" style="margin-top: 0.5rem; color: #ffaa00;">Hitting enemies drains -25% Shield Energy instead of instant death! Collect 🗝️ Crystals to unlock 🌀 Portal Exit before AIR expires!</div>
                             </div>
                         </div>
                     </div>

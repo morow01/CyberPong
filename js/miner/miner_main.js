@@ -1,11 +1,13 @@
 /* ==========================================================================
-   Manic Miner: Cyber Edition - Application Entrypoint & Input Controller (v3.0.1)
+   Manic Miner: Cyber Edition - Application Entrypoint & Input Controller (v3.1.0)
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
     const airFill = document.getElementById('airFill');
     const airText = document.getElementById('airText');
+    const healthFill = document.getElementById('healthFill');
+    const healthText = document.getElementById('healthText');
     const scoreText = document.getElementById('scoreText');
     const livesText = document.getElementById('livesText');
     const levelNameEl = document.getElementById('levelName');
@@ -29,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const keys = {};
     const input = { left: false, right: false, jump: false };
 
-    // Lazy Audio Init
     document.addEventListener('keydown', () => window.sound.init(), { once: true });
     document.addEventListener('click', () => window.sound.init(), { once: true });
 
@@ -107,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
         input.right = keys['KeyD'] || keys['ArrowRight'];
         input.jump = keys['Space'] || keys['KeyW'] || keys['ArrowUp'];
 
-        // Gamepad API Poller
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
         if (gamepads[0]) {
             const gp = gamepads[0];
@@ -128,6 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const airPct = Math.max(0, (miner.airSupply / miner.level.airLimit) * 100);
         if (airFill) airFill.style.width = `${airPct}%`;
         if (airText) airText.textContent = `${Math.ceil(miner.airSupply)}s`;
+
+        const healthPct = Math.max(0, (miner.willy.health / miner.willy.maxHealth) * 100);
+        if (healthFill) healthFill.style.width = `${healthPct}%`;
+        if (healthText) healthText.textContent = `${miner.willy.health}%`;
 
         if (gameOverModal && (miner.state === 'GAMEOVER' || miner.state === 'VICTORY') && !gameOverModal.classList.contains('active')) {
             const winnerText = document.getElementById('winnerText');
