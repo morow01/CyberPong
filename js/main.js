@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v3.1.3 Application Entrypoint & UI Controller
+   CyberPong v3.2.0 Application Entrypoint & UI Controller
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -318,14 +318,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Process Input
+    // Process Input (Frost Stasis applies -60% speed multiplier instead of locking input!)
     function processInput(dt) {
         if (game.state !== 'PLAYING') return;
 
         const moveSpeed = 500;
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
 
-        if (game.mode !== 'demo' && !game.p1.isFrozen && game.p1.stunTimer <= 0) {
+        if (game.mode !== 'demo' && game.p1.stunTimer <= 0) {
             let p1Move = 0;
             if (keys['KeyW']) p1Move -= 1;
             if (keys['KeyS']) p1Move += 1;
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            const speedMult = game.p1.isFrozen ? 0.5 : 1.0;
+            const speedMult = game.p1.isFrozen ? 0.4 : 1.0;
             game.p1.y += p1Move * moveSpeed * speedMult * dt;
         }
 
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (game.mode === '2p') {
-            if (!game.p2.isFrozen && game.p2.stunTimer <= 0) {
+            if (game.p2.stunTimer <= 0) {
                 let p2Move = 0;
                 if (keys['ArrowUp']) p2Move -= 1;
                 if (keys['ArrowDown']) p2Move += 1;
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                const speedMult = game.p2.isFrozen ? 0.5 : 1.0;
+                const speedMult = game.p2.isFrozen ? 0.4 : 1.0;
                 game.p2.y += p2Move * moveSpeed * speedMult * dt;
             }
 
@@ -455,7 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
             bossHealthFill.style.width = `${healthPct}%`;
         }
 
-        // Safety Net: Ensure Game Over Modal shows up when game.state === 'GAMEOVER'
         if (game.state === 'GAMEOVER' && gameOverModal && !gameOverModal.classList.contains('active')) {
             showGameOverModal();
         }
@@ -469,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         if (paddle.hasShield) html += `<div class="badge-powerup" title="Shield Barrier">🛡️</div>`;
         if (paddle.hasMagnet) html += `<div class="badge-powerup" title="Magnetic Field">🧲</div>`;
-        if (paddle.isFrozen) html += `<div class="badge-powerup" title="Frozen">❄️</div>`;
+        if (paddle.isFrozen) html += `<div class="badge-powerup" title="Frost Slow (-60%)">❄️</div>`;
         if (paddle.hasSight) html += `<div class="badge-powerup" title="Cyber Sight">👁️</div>`;
         if (paddle.sizeBoostTimer > 0) html += `<div class="badge-powerup" title="Titan Size">📏</div>`;
         if (paddle.laserAmmo > 0) html += `<div class="badge-powerup" title="Laser Ammo (${paddle.laserAmmo})">🔫${paddle.laserAmmo}</div>`;
