@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v2.2 Application Entrypoint & UI Controller
+   CyberPong v3.1.2 Application Entrypoint & UI Controller
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,57 +74,65 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', () => window.sound.init(), { once: true });
 
     // Mode Selection
-    btnMode1P.addEventListener('click', () => {
-        selectedMode = '1p';
-        btnMode1P.classList.add('active');
-        btnMode2P.classList.remove('active');
-        btnModeBoss.classList.remove('active');
-        btnModeDemo.classList.remove('active');
-        aiDifficultyGroup.style.display = 'block';
-        targetScoreGroup.style.display = 'block';
-        bossBarWrapper.style.display = 'none';
-        p1NameEl.textContent = 'PLAYER 1';
-        p2NameEl.textContent = 'CYBER AI';
-    });
+    if (btnMode1P) {
+        btnMode1P.addEventListener('click', () => {
+            selectedMode = '1p';
+            btnMode1P.classList.add('active');
+            if (btnMode2P) btnMode2P.classList.remove('active');
+            if (btnModeBoss) btnModeBoss.classList.remove('active');
+            if (btnModeDemo) btnModeDemo.classList.remove('active');
+            if (aiDifficultyGroup) aiDifficultyGroup.style.display = 'block';
+            if (targetScoreGroup) targetScoreGroup.style.display = 'block';
+            if (bossBarWrapper) bossBarWrapper.style.display = 'none';
+            if (p1NameEl) p1NameEl.textContent = 'PLAYER 1';
+            if (p2NameEl) p2NameEl.textContent = 'CYBER AI';
+        });
+    }
 
-    btnMode2P.addEventListener('click', () => {
-        selectedMode = '2p';
-        btnMode2P.classList.add('active');
-        btnMode1P.classList.remove('active');
-        btnModeBoss.classList.remove('active');
-        btnModeDemo.classList.remove('active');
-        aiDifficultyGroup.style.display = 'none';
-        targetScoreGroup.style.display = 'block';
-        bossBarWrapper.style.display = 'none';
-        p1NameEl.textContent = 'PLAYER 1';
-        p2NameEl.textContent = 'PLAYER 2';
-    });
+    if (btnMode2P) {
+        btnMode2P.addEventListener('click', () => {
+            selectedMode = '2p';
+            btnMode2P.classList.add('active');
+            if (btnMode1P) btnMode1P.classList.remove('active');
+            if (btnModeBoss) btnModeBoss.classList.remove('active');
+            if (btnModeDemo) btnModeDemo.classList.remove('active');
+            if (aiDifficultyGroup) aiDifficultyGroup.style.display = 'none';
+            if (targetScoreGroup) targetScoreGroup.style.display = 'block';
+            if (bossBarWrapper) bossBarWrapper.style.display = 'none';
+            if (p1NameEl) p1NameEl.textContent = 'PLAYER 1';
+            if (p2NameEl) p2NameEl.textContent = 'PLAYER 2';
+        });
+    }
 
-    btnModeBoss.addEventListener('click', () => {
-        selectedMode = 'boss';
-        btnModeBoss.classList.add('active');
-        btnMode1P.classList.remove('active');
-        btnMode2P.classList.remove('active');
-        btnModeDemo.classList.remove('active');
-        aiDifficultyGroup.style.display = 'none';
-        targetScoreGroup.style.display = 'none';
-        bossBarWrapper.style.display = 'flex';
-        p1NameEl.textContent = 'PLAYER 1';
-        p2NameEl.textContent = 'MOTHERSHIP CORE';
-    });
+    if (btnModeBoss) {
+        btnModeBoss.addEventListener('click', () => {
+            selectedMode = 'boss';
+            btnModeBoss.classList.add('active');
+            if (btnMode1P) btnMode1P.classList.remove('active');
+            if (btnMode2P) btnMode2P.classList.remove('active');
+            if (btnModeDemo) btnModeDemo.classList.remove('active');
+            if (aiDifficultyGroup) aiDifficultyGroup.style.display = 'none';
+            if (targetScoreGroup) targetScoreGroup.style.display = 'none';
+            if (bossBarWrapper) bossBarWrapper.style.display = 'flex';
+            if (p1NameEl) p1NameEl.textContent = 'PLAYER 1';
+            if (p2NameEl) p2NameEl.textContent = 'MOTHERSHIP CORE';
+        });
+    }
 
-    btnModeDemo.addEventListener('click', () => {
-        selectedMode = 'demo';
-        btnModeDemo.classList.add('active');
-        btnMode1P.classList.remove('active');
-        btnMode2P.classList.remove('active');
-        btnModeBoss.classList.remove('active');
-        aiDifficultyGroup.style.display = 'none';
-        targetScoreGroup.style.display = 'block';
-        bossBarWrapper.style.display = 'none';
-        p1NameEl.textContent = 'CYBER AI 1';
-        p2NameEl.textContent = 'CYBER AI 2';
-    });
+    if (btnModeDemo) {
+        btnModeDemo.addEventListener('click', () => {
+            selectedMode = 'demo';
+            btnModeDemo.classList.add('active');
+            if (btnMode1P) btnMode1P.classList.remove('active');
+            if (btnMode2P) btnMode2P.classList.remove('active');
+            if (btnModeBoss) btnModeBoss.classList.remove('active');
+            if (aiDifficultyGroup) aiDifficultyGroup.style.display = 'none';
+            if (targetScoreGroup) targetScoreGroup.style.display = 'block';
+            if (bossBarWrapper) bossBarWrapper.style.display = 'none';
+            if (p1NameEl) p1NameEl.textContent = 'CYBER AI 1';
+            if (p2NameEl) p2NameEl.textContent = 'CYBER AI 2';
+        });
+    }
 
     // Theme Switcher
     themeButtons.forEach(btn => {
@@ -142,16 +150,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Aim Assist Toggle
-    btnAimAssistToggle.addEventListener('click', () => {
-        game.showAimAssist = !game.showAimAssist;
-        if (game.showAimAssist) {
-            btnAimAssistToggle.classList.add('active');
-            btnAimAssistToggle.textContent = '🎯 AIM: ON';
-        } else {
-            btnAimAssistToggle.classList.remove('active');
-            btnAimAssistToggle.textContent = '🎯 AIM: OFF';
-        }
-    });
+    if (btnAimAssistToggle) {
+        btnAimAssistToggle.addEventListener('click', () => {
+            game.showAimAssist = !game.showAimAssist;
+            if (game.showAimAssist) {
+                btnAimAssistToggle.classList.add('active');
+                btnAimAssistToggle.textContent = '🎯 AIM: ON';
+            } else {
+                btnAimAssistToggle.classList.remove('active');
+                btnAimAssistToggle.textContent = '🎯 AIM: OFF';
+            }
+        });
+    }
 
     // Difficulty Selector
     diffButtons.forEach(btn => {
@@ -172,70 +182,86 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Start Game
-    btnStartGame.addEventListener('click', () => {
-        startModal.classList.remove('active');
+    if (btnStartGame) {
+        btnStartGame.addEventListener('click', () => {
+            if (startModal) startModal.classList.remove('active');
 
-        if (selectedMode === 'boss') {
-            currentBossStage = 1;
-            matchInfoEl.textContent = `BOSS CAMPAIGN - STAGE 1`;
-            bossNameEl.textContent = `MOTHERSHIP CORE`;
-            p2NameEl.textContent = `MOTHERSHIP CORE`;
-            bossBarWrapper.style.display = 'flex';
-            game.startMatch('boss', 'boss_mothership', 5, 1);
-        } else if (selectedMode === 'demo') {
-            matchInfoEl.textContent = `AI VS AI DEMO MATCH`;
-            bossBarWrapper.style.display = 'none';
-            game.startMatch('demo', 'medium', selectedScore);
-        } else {
-            bossBarWrapper.style.display = 'none';
-            matchInfoEl.textContent = `FIRST TO ${selectedScore} WINS`;
-            game.startMatch(selectedMode, selectedDiff, selectedScore);
-        }
-    });
+            if (selectedMode === 'boss') {
+                currentBossStage = 1;
+                if (matchInfoEl) matchInfoEl.textContent = `BOSS CAMPAIGN - STAGE 1`;
+                if (bossNameEl) bossNameEl.textContent = `MOTHERSHIP CORE`;
+                if (p2NameEl) p2NameEl.textContent = `MOTHERSHIP CORE`;
+                if (bossBarWrapper) bossBarWrapper.style.display = 'flex';
+                game.startMatch('boss', 'boss_mothership', 5, 1);
+            } else if (selectedMode === 'demo') {
+                if (matchInfoEl) matchInfoEl.textContent = `AI VS AI DEMO MATCH`;
+                if (bossBarWrapper) bossBarWrapper.style.display = 'none';
+                game.startMatch('demo', 'medium', selectedScore);
+            } else {
+                if (bossBarWrapper) bossBarWrapper.style.display = 'none';
+                if (matchInfoEl) matchInfoEl.textContent = `FIRST TO ${selectedScore} WINS`;
+                game.startMatch(selectedMode, selectedDiff, selectedScore);
+            }
+        });
+    }
 
     // Pause Controls
-    btnResume.addEventListener('click', () => {
-        pauseModal.classList.remove('active');
-        game.state = 'PLAYING';
-    });
+    if (btnResume) {
+        btnResume.addEventListener('click', () => {
+            if (pauseModal) pauseModal.classList.remove('active');
+            game.state = 'PLAYING';
+        });
+    }
 
-    btnQuit.addEventListener('click', () => {
-        pauseModal.classList.remove('active');
-        startModal.classList.add('active');
-        game.state = 'MENU';
-    });
+    if (btnQuit) {
+        btnQuit.addEventListener('click', () => {
+            if (pauseModal) pauseModal.classList.remove('active');
+            if (startModal) startModal.classList.add('active');
+            game.state = 'MENU';
+        });
+    }
 
     // Game Over Actions
-    btnPlayAgain.addEventListener('click', () => {
-        gameOverModal.classList.remove('active');
-        if (selectedMode === 'boss') {
-            game.startMatch('boss', 'boss_mothership', 5, currentBossStage);
-        } else {
-            game.startMatch(selectedMode, selectedDiff, selectedScore);
-        }
-    });
+    if (btnPlayAgain) {
+        btnPlayAgain.addEventListener('click', () => {
+            if (gameOverModal) gameOverModal.classList.remove('active');
+            if (selectedMode === 'boss') {
+                game.startMatch('boss', 'boss_mothership', 5, currentBossStage);
+            } else {
+                game.startMatch(selectedMode, selectedDiff, selectedScore);
+            }
+        });
+    }
 
-    btnReturnMenu.addEventListener('click', () => {
-        gameOverModal.classList.remove('active');
-        startModal.classList.add('active');
-        game.state = 'MENU';
-    });
+    if (btnReturnMenu) {
+        btnReturnMenu.addEventListener('click', () => {
+            if (gameOverModal) gameOverModal.classList.remove('active');
+            if (startModal) startModal.classList.add('active');
+            game.state = 'MENU';
+        });
+    }
 
     // Audio Controls
-    btnSoundToggle.addEventListener('click', () => {
-        window.sound.muted = !window.sound.muted;
-        btnSoundToggle.textContent = window.sound.muted ? '🔇' : '🔊';
-        window.sound.setMuted(window.sound.muted);
-    });
+    if (btnSoundToggle) {
+        btnSoundToggle.addEventListener('click', () => {
+            window.sound.muted = !window.sound.muted;
+            btnSoundToggle.textContent = window.sound.muted ? '🔇' : '🔊';
+            window.sound.setMuted(window.sound.muted);
+        });
+    }
 
-    btnBgmToggle.addEventListener('click', () => {
-        const bgmState = window.sound.toggleBgm();
-        btnBgmToggle.textContent = bgmState ? '🎵 BGM: ON' : '🎵 BGM: OFF';
-    });
+    if (btnBgmToggle) {
+        btnBgmToggle.addEventListener('click', () => {
+            const bgmState = window.sound.toggleBgm();
+            btnBgmToggle.textContent = bgmState ? '🎵 BGM: ON' : '🎵 BGM: OFF';
+        });
+    }
 
-    volumeSlider.addEventListener('input', (e) => {
-        window.sound.setVolume(parseFloat(e.target.value));
-    });
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', (e) => {
+            window.sound.setVolume(parseFloat(e.target.value));
+        });
+    }
 
     // Keyboard Listeners
     window.addEventListener('keydown', (e) => {
@@ -244,10 +270,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.code === 'KeyP' || e.code === 'Escape') {
             if (game.state === 'PLAYING') {
                 game.state = 'PAUSED';
-                pauseModal.classList.add('active');
+                if (pauseModal) pauseModal.classList.add('active');
             } else if (game.state === 'PAUSED') {
                 game.state = 'PLAYING';
-                pauseModal.classList.remove('active');
+                if (pauseModal) pauseModal.classList.remove('active');
             }
         }
     });
@@ -271,20 +297,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const gp1 = gamepads[0];
         const gp2 = gamepads[1];
 
-        if (gp1) {
-            p1GamepadBadge.classList.add('connected');
-            gp1Status.innerHTML = `🎮 Controller 1: <span class="status-on">${gp1.id.substring(0, 20)}</span>`;
-        } else {
-            p1GamepadBadge.classList.remove('connected');
-            gp1Status.innerHTML = `🎮 Controller 1: <span class="status-off">Disconnected</span>`;
+        if (p1GamepadBadge && gp1Status) {
+            if (gp1) {
+                p1GamepadBadge.classList.add('connected');
+                gp1Status.innerHTML = `🎮 Controller 1: <span class="status-on">${gp1.id.substring(0, 20)}</span>`;
+            } else {
+                p1GamepadBadge.classList.remove('connected');
+                gp1Status.innerHTML = `🎮 Controller 1: <span class="status-off">Disconnected</span>`;
+            }
         }
 
-        if (gp2) {
-            p2GamepadBadge.classList.add('connected');
-            gp2Status.innerHTML = `🎮 Controller 2: <span class="status-on">${gp2.id.substring(0, 20)}</span>`;
-        } else {
-            p2GamepadBadge.classList.remove('connected');
-            gp2Status.innerHTML = `🎮 Controller 2: <span class="status-off">Disconnected</span>`;
+        if (p2GamepadBadge && gp2Status) {
+            if (gp2) {
+                p2GamepadBadge.classList.add('connected');
+                gp2Status.innerHTML = `🎮 Controller 2: <span class="status-on">${gp2.id.substring(0, 20)}</span>`;
+            } else {
+                p2GamepadBadge.classList.remove('connected');
+                gp2Status.innerHTML = `🎮 Controller 2: <span class="status-off">Disconnected</span>`;
+            }
         }
     }
 
@@ -295,7 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const moveSpeed = 500;
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
 
-        // Player 1 controls (skipped in demo mode)
         if (game.mode !== 'demo' && !game.p1.isFrozen && game.p1.stunTimer <= 0) {
             let p1Move = 0;
             if (keys['KeyW']) p1Move -= 1;
@@ -326,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
             game.p1.y = Math.max(10, Math.min(game.height - game.p1.height - 10, game.p1.y));
         }
 
-        // Player 2 controls in 2P mode
         if (game.mode === '2p') {
             if (!game.p2.isFrozen && game.p2.stunTimer <= 0) {
                 let p2Move = 0;
@@ -358,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Show Game Over Modal (Fixed for defeat & victory)
+    // Show Game Over Modal
     function showGameOverModal() {
         let winner = 'PLAYER 1';
         let winnerColor = '#00f3ff';
@@ -391,35 +419,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalScoreText = document.getElementById('finalScoreText');
         const statsSummary = document.getElementById('statsSummary');
 
-        winnerText.textContent = winner;
-        winnerText.style.color = winnerColor;
-        finalScoreText.textContent = `${game.p1.score} - ${game.p2.score}`;
+        if (winnerText) {
+            winnerText.textContent = winner;
+            winnerText.style.color = winnerColor;
+        }
+        if (finalScoreText) finalScoreText.textContent = `${game.p1.score} - ${game.p2.score}`;
 
-        statsSummary.innerHTML = `
-            <div>🔥 Max Rally: <strong>${game.stats.maxRally}</strong></div>
-            <div>⚡ Upgrades Claimed: <strong>${game.stats.powerUpsCollected}</strong></div>
-        `;
+        if (statsSummary) {
+            statsSummary.innerHTML = `
+                <div>🔥 Max Rally: <strong>${game.stats.maxRally}</strong></div>
+                <div>⚡ Upgrades Claimed: <strong>${game.stats.powerUpsCollected}</strong></div>
+            `;
+        }
 
-        gameOverModal.classList.add('active');
+        if (gameOverModal) gameOverModal.classList.add('active');
     }
 
     // HUD Update Loop
     function updateHUD() {
-        p1ScoreEl.textContent = game.p1.score;
-        p2ScoreEl.textContent = game.p2.score;
+        if (p1ScoreEl) p1ScoreEl.textContent = game.p1.score;
+        if (p2ScoreEl) p2ScoreEl.textContent = game.p2.score;
 
-        p1UltFill.style.width = `${game.p1.ultEnergy}%`;
-        p2UltFill.style.width = `${game.p2.ultEnergy}%`;
-        if (game.p1.ultEnergy >= 100) p1UltFill.classList.add('ready'); else p1UltFill.classList.remove('ready');
-        if (game.p2.ultEnergy >= 100) p2UltFill.classList.add('ready'); else p2UltFill.classList.remove('ready');
+        if (p1UltFill) {
+            p1UltFill.style.width = `${game.p1.ultEnergy}%`;
+            if (game.p1.ultEnergy >= 100) p1UltFill.classList.add('ready'); else p1UltFill.classList.remove('ready');
+        }
 
-        if (game.mode === 'boss') {
+        if (p2UltFill) {
+            p2UltFill.style.width = `${game.p2.ultEnergy}%`;
+            if (game.p2.ultEnergy >= 100) p2UltFill.classList.add('ready'); else p2UltFill.classList.remove('ready');
+        }
+
+        if (game.mode === 'boss' && bossHealthFill) {
             const healthPct = Math.max(0, (game.bossHealth / game.maxBossHealth) * 100);
             bossHealthFill.style.width = `${healthPct}%`;
         }
 
-        renderPowerupBadges(game.p1, p1PowerupsEl);
-        renderPowerupBadges(game.p2, p2PowerupsEl);
+        if (p1PowerupsEl) renderPowerupBadges(game.p1, p1PowerupsEl);
+        if (p2PowerupsEl) renderPowerupBadges(game.p2, p2PowerupsEl);
         updateGamepadStatusBadges();
     }
 
