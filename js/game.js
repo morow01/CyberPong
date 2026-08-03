@@ -1,12 +1,12 @@
 /* ==========================================================================
-   CyberPong v3.1.3 Core Game Physics & State Engine
+   CyberPong v3.2.0 Core Game Physics & State Engine
    ========================================================================== */
 
 const POWERUP_TYPES = {
     SPEED: { id: 'SPEED', icon: '⚡', name: 'Speed Boost', color: '#00f3ff' },
     SHIELD: { id: 'SHIELD', icon: '🛡️', name: 'Cyber Shield', color: '#00ff66' },
     MAGNET: { id: 'MAGNET', icon: '🧲', name: 'Magnetic Field', color: '#a855f7' },
-    FROST: { id: 'FROST', icon: '❄️', name: 'Frost Stasis', color: '#3b82f6' },
+    FROST: { id: 'FROST', icon: '❄️', name: 'Frost Slow-Down', color: '#3b82f6' },
     MULTIBALL: { id: 'MULTIBALL', icon: '💥', name: 'Multi-Ball', color: '#ff0055' },
     SIZE: { id: 'SIZE', icon: '📏', name: 'Titan Size', color: '#ffaa00' },
     LASER: { id: 'LASER', icon: '🔫', name: 'Plasma Blaster', color: '#ff3300' },
@@ -517,7 +517,6 @@ class GameEngine {
             }
         }
 
-        // Guaranteed Ball Respawn Safety Net
         if (this.balls.length === 0 && this.state === 'PLAYING' && !this.spawningBall) {
             this.spawningBall = true;
             setTimeout(() => {
@@ -611,8 +610,10 @@ class GameEngine {
                 paddle.hasMagnet = true;
                 break;
             case 'FROST':
+                // Slows rival paddle down to 40% speed instead of complete freeze!
                 opponent.isFrozen = true;
                 opponent.frostTimer = 5.0;
+                this.particles.addFloatingText(this.width / 2, 100, "FROST SLOW-DOWN (-60%)!", "#3b82f6");
                 this.sound.playFreeze();
                 break;
             case 'MULTIBALL':
