@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v2.2.2 Core Game Physics & State Engine
+   CyberPong v3.1.3 Core Game Physics & State Engine
    ========================================================================== */
 
 const POWERUP_TYPES = {
@@ -278,6 +278,7 @@ class GameEngine {
 
         this.showAimAssist = false;
         this.onGameOverCallback = null;
+        this.spawningBall = false;
 
         this.p1 = new Paddle('p1', 30, this.height / 2 - 57);
         this.p2 = new Paddle('p2', this.width - 44, this.height / 2 - 57);
@@ -325,6 +326,7 @@ class GameEngine {
         this.lasers = [];
         this.powerUpSpawnTimer = 4;
         this.bulletTimeTimer = 0;
+        this.spawningBall = false;
 
         this.bumpers = [
             new PinballBumper(this.width / 2, this.height * 0.3),
@@ -343,6 +345,7 @@ class GameEngine {
         const vx = Math.cos(angle) * speed * dir;
         const vy = Math.sin(angle) * speed;
         this.balls.push(new Ball(this.width / 2, this.height / 2, vx, vy));
+        this.spawningBall = false;
     }
 
     triggerUltimate(paddle) {
@@ -514,8 +517,12 @@ class GameEngine {
             }
         }
 
-        if (this.balls.length === 0 && this.state === 'PLAYING') {
-            this.spawnBall(1);
+        // Guaranteed Ball Respawn Safety Net
+        if (this.balls.length === 0 && this.state === 'PLAYING' && !this.spawningBall) {
+            this.spawningBall = true;
+            setTimeout(() => {
+                if (this.state === 'PLAYING') this.spawnBall(1);
+            }, 300);
         }
 
         this.particles.update(effectiveDt);
@@ -558,7 +565,6 @@ class GameEngine {
         const normalizedIntersectY = relativeIntersectY / (paddle.height / 2);
         let bounceAngle = normalizedIntersectY * (Math.PI / 3.5);
 
-        // Nudge horizontal bounces to prevent infinite flat loop
         if (Math.abs(bounceAngle) < 0.1) {
             bounceAngle = (Math.random() > 0.5 ? 1 : -1) * (0.15 + Math.random() * 0.2);
         }
@@ -643,14 +649,17 @@ class GameEngine {
         this.balls.splice(ballIndex, 1);
         this.stats.currentRally = 0;
 
-        if ((this.mode !== 'boss' && (this.p1.score >= this.targetScore || this.p2.score >= this.targetScore)) || (this.mode === 'boss' && (this.bossHealth <= 0 || this.p2.score >= 5))) {
+        const isGameOver = (this.mode !== 'boss' && (this.p1.score >= this.targetScore || this.p2.score >= this.targetScore)) || (this.mode === 'boss' && (this.bossHealth <= 0 || this.p2.score >= 5));
+
+        if (isGameOver) {
             this.state = 'GAMEOVER';
             this.sound.playVictory();
             if (this.onGameOverCallback) this.onGameOverCallback();
             return;
         }
 
-        if (this.balls.length === 0) {
+        if (this.balls.length === 0 && !this.spawningBall) {
+            this.spawningBall = true;
             const nextDir = scorerId === 'p1' ? -1 : 1;
             setTimeout(() => {
                 if (this.state === 'PLAYING') this.spawnBall(nextDir);
