@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v3.1.2 Application Entrypoint & UI Controller
+   CyberPong v3.1.3 Application Entrypoint & UI Controller
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -453,6 +453,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (game.mode === 'boss' && bossHealthFill) {
             const healthPct = Math.max(0, (game.bossHealth / game.maxBossHealth) * 100);
             bossHealthFill.style.width = `${healthPct}%`;
+        }
+
+        // Safety Net: Ensure Game Over Modal shows up when game.state === 'GAMEOVER'
+        if (game.state === 'GAMEOVER' && gameOverModal && !gameOverModal.classList.contains('active')) {
+            showGameOverModal();
         }
 
         if (p1PowerupsEl) renderPowerupBadges(game.p1, p1PowerupsEl);
