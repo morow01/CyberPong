@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CyberPong v3.2.0 Core Game Physics & State Engine
+   CyberPong v3.3.0 Core Game Physics & State Engine
    ========================================================================== */
 
 const POWERUP_TYPES = {
@@ -157,27 +157,37 @@ class Paddle {
     }
 }
 
+// Temporary Pinball Bumper (Spawns randomly, only 1 at a time, despawns after duration)
 class PinballBumper {
-    constructor(x, y) {
+    constructor(x, y, duration = 12) {
         this.x = x;
         this.y = y;
-        this.radius = 24;
+        this.radius = 26;
         this.pulse = 0;
         this.color = '#ff0055';
+        this.life = duration;
     }
 
     update(dt) {
         if (this.pulse > 0) this.pulse -= 4 * dt;
+        this.life -= dt;
     }
 
     draw(ctx) {
         ctx.save();
-        const r = this.radius + Math.max(0, this.pulse * 8);
+        const pulseScale = 1 + Math.sin(Date.now() / 200) * 0.08;
+        const r = (this.radius + Math.max(0, this.pulse * 8)) * pulseScale;
+
+        // Flashes when despawning soon
+        if (this.life < 3 && Math.floor(Date.now() / 150) % 2 === 0) {
+            ctx.globalAlpha = 0.4;
+        }
+
         ctx.shadowColor = this.color;
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = 'rgba(255, 0, 85, 0.25)';
+        ctx.shadowBlur = 22;
+        ctx.fillStyle = 'rgba(255, 0, 85, 0.28)';
         ctx.strokeStyle = this.color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3.5;
 
         ctx.beginPath();
         ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
@@ -285,7 +295,10 @@ class GameEngine {
         this.balls = [];
         this.powerUps = [];
         this.lasers = [];
-        this.bumpers = [];
+        
+        // Single temporary bumper spawner state
+        this.activeBumper = null;
+        this.bumperSpawnTimer = 3.0;
 
         this.ai1 = new AIController('medium');
         this.ai2 = new AIController(this.aiDiff);
@@ -328,15 +341,25 @@ class GameEngine {
         this.bulletTimeTimer = 0;
         this.spawningBall = false;
 
-        this.bumpers = [
-            new PinballBumper(this.width / 2, this.height * 0.3),
-            new PinballBumper(this.width / 2, this.height * 0.7)
-        ];
+        this.activeBumper = null;
+        this.bumperSpawnTimer = 4.0;
 
         this.stats = { rallies: 0, currentRally: 0, maxRally: 0, powerUpsCollected: 0 };
 
         this.spawnBall(1);
         this.state = 'PLAYING';
+    }
+
+    spawnTemporaryBumper() {
+        const x = this.width * 0.25 + Math.random() * (this.width * 0.5);
+        const y = 90 + Math.random() * (this.height - 180);
+        const duration = 10 + Math.random() * 6; // Lasts 10-16s
+        this.activeBumper = new PinballBumper(x, y, duration);
+
+        if (this.particles) {
+            this.particles.addPowerupBurst(x, y, '#ff0055');
+            this.particles.addFloatingText(x, y, "PINBALL BUMPER!", "#ff0055");
+        }
     }
 
     spawnBall(dir = 1) {
@@ -375,7 +398,21 @@ class GameEngine {
 
         this.p1.update(dt);
         this.p2.update(dt);
-        this.bumpers.forEach(b => b.update(dt));
+
+        // Update single temporary bumper
+        if (this.activeBumper) {
+            this.activeBumper.update(effectiveDt);
+            if (this.activeBumper.life <= 0) {
+                if (this.particles) this.particles.addSparks(this.activeBumper.x, this.activeBumper.y, '#ff0055', 15);
+                this.activeBumper = null;
+                this.bumperSpawnTimer = 5 + Math.random() * 6; // Delay 5-11s before spawning next bumper
+            }
+        } else {
+            this.bumperSpawnTimer -= effectiveDt;
+            if (this.bumperSpawnTimer <= 0) {
+                this.spawnTemporaryBumper();
+            }
+        }
 
         if (this.mode === '1p' || this.mode === 'boss') {
             this.ai2.update(dt, this.p2, this.balls, this.powerUps, this.p1, this.height, this.width);
@@ -463,17 +500,18 @@ class GameEngine {
                 this.particles.addSparks(ball.x, ball.y, '#00f3ff', 6);
             }
 
-            for (const bumper of this.bumpers) {
-                const d = Math.hypot(ball.x - bumper.x, ball.y - bumper.y);
-                if (d < ball.radius + bumper.radius) {
-                    const angle = Math.atan2(ball.y - bumper.y, ball.x - bumper.x);
+            // Bumper Collision (Single temporary bumper)
+            if (this.activeBumper) {
+                const d = Math.hypot(ball.x - this.activeBumper.x, ball.y - this.activeBumper.y);
+                if (d < ball.radius + this.activeBumper.radius) {
+                    const angle = Math.atan2(ball.y - this.activeBumper.y, ball.x - this.activeBumper.x);
                     const speed = Math.hypot(ball.vx, ball.vy) * 1.25;
                     ball.vx = Math.cos(angle) * speed;
                     ball.vy = Math.sin(angle) * speed;
-                    bumper.pulse = 1.0;
+                    this.activeBumper.pulse = 1.0;
                     this.sound.playBumper();
-                    this.particles.addSparks(bumper.x, bumper.y, '#ff0055', 18);
-                    this.particles.addFloatingText(bumper.x, bumper.y, "BUMPER BOOST!", "#ff0055");
+                    this.particles.addSparks(this.activeBumper.x, this.activeBumper.y, '#ff0055', 18);
+                    this.particles.addFloatingText(this.activeBumper.x, this.activeBumper.y, "BUMPER BOOST!", "#ff0055");
                 }
             }
 
@@ -610,7 +648,6 @@ class GameEngine {
                 paddle.hasMagnet = true;
                 break;
             case 'FROST':
-                // Slows rival paddle down to 40% speed instead of complete freeze!
                 opponent.isFrozen = true;
                 opponent.frostTimer = 5.0;
                 this.particles.addFloatingText(this.width / 2, 100, "FROST SLOW-DOWN (-60%)!", "#3b82f6");
@@ -684,7 +721,10 @@ class GameEngine {
             }
         }
 
-        this.bumpers.forEach(b => b.draw(this.ctx));
+        // Draw single temporary bumper if active
+        if (this.activeBumper) {
+            this.activeBumper.draw(this.ctx);
+        }
 
         if (this.p1.hasShield) this.drawShieldWall(12, '#00ff66');
         if (this.p2.hasShield) this.drawShieldWall(this.width - 12, '#00ff66');
