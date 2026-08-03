@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manic Miner: Cyber Edition v3.1.0</title>
+    <title>Manic Miner: Cyber Edition v3.1.1</title>
     <meta name="description" content="A modern remaster of the classic 1983 Spectrum platformer Manic Miner with cyber neon visuals, health energy meters, crumbling tiles, conveyors, and air meters.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,13 +66,13 @@
             <div class="hud-center">
                 <div class="title-row">
                     <h1 class="game-logo" style="color: #ffaa00;">MANIC <span class="highlight" style="color: #ff0055; text-shadow: 0 0 12px #ff0055;">MINER</span></h1>
-                    <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.1.0</span>
+                    <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.1.1</span>
                 </div>
                 <div class="match-info" id="levelName">THE CENTRAL CAVERN</div>
 
                 <div class="meter-row">
                     <!-- Energy Health Meter -->
-                    <div class="meter-wrapper" title="Willy Shield Energy Meter">
+                    <div class="meter-wrapper" title="Willy Shield Energy Meter (200 Capacity)">
                         <span style="font-family: var(--font-heading); font-size: 0.65rem; color: #ff0055;">ENERGY</span>
                         <div class="meter-track" style="border-color: #ff0055;">
                             <div class="health-fill" id="healthFill"></div>
@@ -86,7 +86,7 @@
                         <div class="meter-track">
                             <div class="air-fill" id="airFill"></div>
                         </div>
-                        <span id="airText" style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--text-muted);">120s</span>
+                        <span id="airText" style="font-family: var(--font-heading); font-size: 0.65rem; color: var(--text-muted);">150s</span>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
             <!-- On-screen Legend / Guide Bar -->
             <div id="legendBar">
                 <div class="legend-item"><span class="icon">🗝️</span> Collect Crystals</div>
-                <div class="legend-item"><span class="icon">⚡</span> Shield Energy (-25% hit)</div>
+                <div class="legend-item"><span class="icon">⚡</span> 200 Shield Energy (-10 hit)</div>
                 <div class="legend-item"><span class="icon">🧱</span> Crumbling Block</div>
                 <div class="legend-item"><span class="icon">«««</span> Conveyor Belt</div>
                 <div class="legend-item"><span class="icon">🌀</span> Portal Exit</div>
@@ -121,7 +121,7 @@
                     <div class="modal-header">
                         <div class="header-title-wrap">
                             <h2 style="color: #ffaa00;">MANIC <span class="highlight" style="color: #ff0055;">MINER</span></h2>
-                            <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.1.0</span>
+                            <span class="version-badge" style="border-color: #ffaa00; color: #ffaa00;">v3.1.1</span>
                         </div>
                         <p class="subtitle">Guide Miner Willy through Cyber Caverns ⛏️</p>
                     </div>
@@ -132,7 +132,7 @@
                                 <span class="box-title">CONTROLS & OBJECTIVES</span>
                                 <div class="key-combo"><kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> or <kbd>Left Stick</kbd> : Walk Left/Right</div>
                                 <div class="key-combo"><kbd>SPACE</kbd> / <kbd>W</kbd> / <kbd>Button A</kbd> : Jump (Press 2x for 🚀 Double Jump)</div>
-                                <div class="key-combo" style="margin-top: 0.5rem; color: #ffaa00;">Hitting enemies drains -25% Shield Energy instead of instant death! Collect 🗝️ Crystals to unlock 🌀 Portal Exit before AIR expires!</div>
+                                <div class="key-combo" style="margin-top: 0.5rem; color: #ffaa00;">200 Max Shield Energy! Enemies only deal -10 damage per contact. Collect 🗝️ Crystals to unlock 🌀 Portal Exit!</div>
                             </div>
                         </div>
                     </div>
